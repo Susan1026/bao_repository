@@ -1,0 +1,9 @@
+/* 手写风格字体 - 组合3：中文字体马善政 + Caveat 秀气英文 */
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Ma+Shan+Zheng&display=swap');
+
+:root {
+  /* 字体变量 - 英文用Caveat，中文自动 fallback 到马善政 */
+  --font-title: 'Caveat', 'Ma Shan Zheng', cursive;
+  --font-body: 'Caveat', 'Ma Shan Zheng', cursive;
+  --font-accent: 'Caveat', cursive;
+}

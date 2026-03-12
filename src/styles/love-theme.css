@@ -1,0 +1,139 @@
+/* 恋爱记录网站手绘风格主题 */
+:root {
+  /* 温馨治愈配色 - 更新为设计规范色彩 */
+  --love-cream: #FFF8F0;
+  --love-cream-alt: #FDF6E3;
+  --love-orange: #F4A261;
+  --love-blue: #A8DADC;
+  --love-pink: #F4C2C2;
+  --love-mint: #B8E6D5;
+  --love-brown: #5D4037;
+  --love-brown-dark: #4A3728;
+  --love-text: #5D4037;
+  
+  /* 浅色背景变体 */
+  --love-bg-blue: #E8F4F5;
+  --love-bg-pink: #FCF0F0;
+  --love-bg-yellow: #FFF9E6;
+  --love-bg-mint: #F0F9F6;
+  
+  /* 手绘边框粗细 */
+  --sketch-border: 3px;
+  --sketch-border-thick: 4px;
+}
+
+/* ===== 全局字体应用 ===== */
+body {
+  font-family: var(--font-body);
+  color: var(--love-text);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-title);
+}
+
+button, .pill-button, .sketch-button {
+  font-family: var(--font-title);
+}
+
+/* 手绘风格边框 */
+.sketch-border {
+  border: var(--sketch-border) solid var(--love-brown-dark);
+  border-radius: 20px;
+  position: relative;
+}
+
+.sketch-border-thin {
+  border: 2px solid var(--love-brown-dark);
+  border-radius: 20px;
+  position: relative;
+}
+
+.sketch-border-wavy {
+  border: var(--sketch-border) solid var(--love-brown-dark);
+  border-radius: 24px;
+  position: relative;
+}
+
+/* 手绘风格按钮 */
+.sketch-button {
+  border: var(--sketch-border) solid var(--love-brown-dark);
+  border-radius: 16px;
+  position: relative;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.sketch-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(74, 55, 40, 0.15);
+}
+
+.sketch-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(74, 55, 40, 0.1);
+}
+
+/* 手绘风格卡片 */
+.sketch-card {
+  border: var(--sketch-border) solid var(--love-brown-dark);
+  border-radius: 20px;
+  background: white;
+  position: relative;
+  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.sketch-card:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(74, 55, 40, 0.12);
+}
+
+/* 药丸形状按钮（导航用） */
+.pill-button {
+  border: var(--sketch-border) solid var(--love-brown-dark);
+  border-radius: 24px;
+  padding: 8px 20px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.pill-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(74, 55, 40, 0.1);
+}
+
+/* 圆形图标容器 */
+.circle-icon {
+  border: var(--sketch-border) solid var(--love-brown-dark);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 波浪线装饰 */
+.wavy-line {
+  background-image: url("data:image/svg+xml,%3Csvg width='100%25' height='10' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 5 Q 5 0, 10 5 T 20 5 T 30 5 T 40 5 T 50 5 T 60 5 T 70 5 T 80 5 T 90 5 T 100 5' stroke='%234A3728' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  height: 10px;
+}
+
+/* 光晕效果 */
+.glow-yellow {
+  background: radial-gradient(circle, rgba(255, 248, 240, 1) 0%, rgba(253, 246, 227, 0) 70%);
+}
+
+/* 统一日历下拉控件的样式 */
+input[type="date"] {
+  font-family: inherit;
+  color: inherit;
+}
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: sepia(100%) hue-rotate(340deg) saturate(200%) brightness(80%); /* 将系统默认的黑色图标转为棕橙系 */
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}

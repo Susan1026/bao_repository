@@ -1,0 +1,24 @@
+# 依赖包（必须忽略）
+node_modules/
+
+# 构建产物（打包生成的，可重建）
+dist/
+
+# Windows 系统文件
+Thumbs.db
+
+# VS Code 编辑器配置（只对你自己有用）
+.vscode/
+*.swp
+*.swo
+
+# 日志文件（无用）
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 环境变量（如果有，包含敏感信息）
+.env
+.env.local
+.env.development.local
