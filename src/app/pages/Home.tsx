@@ -9,13 +9,13 @@ import dogWalk from "../../assets/b1f2c0b8c54ec36a46d8f4c4ca505c04886fb659.png";
 import dogNight from "../../assets/090b153aa64984de67654c19ebdfab1eff06ffcd.png";
 import sceneryImg from "../../assets/8e15011c8641acf499cd0834219dccf286565bb6.png";
 import scooterImg from "../../assets/00405c95656197ce93ce31fd00f70e7e81acffbe.png";
-import ctaImg from "../../assets/88e22654549db48422b862f004688114d74dd53c.png";
+import ctaImg from "../../assets/xiaogou_xiezi.jpg";
 import avatarZhang from "../../assets/8df6557d8aaf5727d6487be620c9c969138f0c4d.png";
 import avatarBao from "../../assets/d036288232f16826f2b90f31903f5a86b0a77e38.png";
 
-// 计算两个日期之间的天数
+// 计算两个日期之间的天数（纪念日倒计时）
 function calcDays(start: Date, end: Date) {
-  const diffTime = Math.abs(end.getTime() - start.getTime());
+  const diffTime = end.getTime() - start.getTime();
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }
 
@@ -31,7 +31,7 @@ function formatDisplayDate(dateStr: string) {
 }
 
 export default function Home() {
-  const today = new Date("2026-03-11");
+  const today = new Date();
   const [startDateStr, setStartDateStr] = useState("2025-03-24");
   const [editingDate, setEditingDate] = useState(false);
   const [tempDate, setTempDate] = useState(startDateStr);
@@ -88,34 +88,32 @@ export default function Home() {
     <div className="space-y-12">
 
       {/* 1. 主视觉区域 (Hero Section) */}
-      <div className="p-10 relative overflow-hidden rounded-3xl" style={{ background: "linear-gradient(135deg, #FFF8F0 0%, #FFF0E6 50%, #FFF8F0 100%)" }}>
+      <div className="p-4 sm:p-10 relative overflow-hidden rounded-3xl" style={{ background: "linear-gradient(135deg, #FFF8F0 0%, #FFF0E6 50%, #FFF8F0 100%)" }}>
 
         {/* 背景装饰小星星 */}
         <div className="absolute top-4 left-8 text-2xl opacity-30" style={{ animation: "spin-slow 8s linear infinite" }}>✦</div>
         <div className="absolute bottom-6 right-10 text-xl opacity-20" style={{ animation: "spin-slow 6s linear infinite reverse" }}>✦</div>
         <div className="absolute top-8 right-1/4 text-base opacity-20" style={{ animation: "spin-slow 10s linear infinite" }}>✦</div>
 
-        <div className="flex items-center justify-between gap-2 relative">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-2 relative">
           
           {/* 绝对定位的心电图连线，横跨两侧，不覆盖中间文字 */}
           <div className="absolute inset-0 flex items-center justify-between pointer-events-none" style={{ zIndex: 0, top: "25%" }}>
             {/* 左半边心电图 */}
-            <svg width="35%" height="60" viewBox="0 0 200 60" preserveAspectRatio="none" className="ml-10">
+            <svg width="35%" height="60" viewBox="0 0 200 60" preserveAspectRatio="none" className="ml-10 hidden sm:block">
               <path d="M0,30 L100,30 L120,5 L140,55 L160,20 L180,30 L200,30" fill="none" stroke="#F4C2C2" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             {/* 右半边心电图 */}
-            <svg width="35%" height="60" viewBox="0 0 200 60" preserveAspectRatio="none" className="mr-10">
+            <svg width="35%" height="60" viewBox="0 0 200 60" preserveAspectRatio="none" className="mr-10 hidden sm:block">
               <path d="M0,30 L20,30 L40,15 L60,45 L80,10 L100,30 L200,30" fill="none" stroke="#F4C2C2" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
 
           {/* ── 左侧头像：Zhang ── */}
-          <div className="flex flex-col items-center gap-3 flex-shrink-0 relative z-10">
+          <div className="flex flex-col items-center gap-3 flex-shrink-0 relative z-10 order-2 sm:order-1">
             <div
-              className="relative"
+              className="relative w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40"
               style={{
-                width: "160px",
-                height: "160px",
                 borderRadius: "50%",
                 border: "4px solid #4A3728",
                 boxShadow: "4px 4px 0 #4A3728",
@@ -125,19 +123,19 @@ export default function Home() {
             >
               <img src={avatarZhang} alt="Zhang" className="w-full h-full object-cover" />
             </div>
-            <span className="text-xl font-bold" style={{ color: "#8B6F47" }}>Zhang</span>
+            <span className="text-lg sm:text-xl font-bold" style={{ color: "#8B6F47" }}>Zhang</span>
           </div>
 
           {/* ── 中间：天数 + 信息 ── */}
-          <div className="flex flex-col items-center gap-5 flex-1 min-w-0 relative z-10 bg-transparent px-4 mt-8" style={{ transform: "scale(1.1)" }}>
-            <p className="text-xl" style={{ color: "#B0A090", fontWeight: "600" }}>我们已相爱</p>
+          <div className="flex flex-col items-center gap-3 sm:gap-5 flex-1 min-w-0 relative z-10 bg-transparent px-2 sm:px-4 mt-4 sm:mt-8 order-1 sm:order-2" style={{ transform: "scale(1)" }}>
+            <p className="text-lg sm:text-xl" style={{ color: "#B0A090", fontWeight: "600" }}>我们已相爱</p>
 
             {/* 核心大数字 */}
             <div className="flex items-baseline gap-2">
               <span
                 className="leading-none"
                 style={{
-                  fontSize: "clamp(5rem, 12vw, 8rem)",
+                  fontSize: "clamp(3rem, 10vw, 6rem)",
                   color: "#F4A261",
                   fontWeight: "700",
                   textShadow: "4px 4px 0 rgba(244,162,97,0.18)",
@@ -147,12 +145,12 @@ export default function Home() {
               >
                 {displayDays}
               </span>
-              <span className="text-5xl" style={{ color: "#B0A090", fontWeight: "600" }}>天</span>
+              <span className="text-3xl sm:text-5xl" style={{ color: "#B0A090", fontWeight: "600" }}>天</span>
             </div>
 
             {/* 大爱心 */}
             <Heart
-              className="w-10 h-10"
+              className="w-8 h-8 sm:w-10 sm:h-10"
               fill="#F4C2C2"
               style={{
                 color: "#F4C2C2",
@@ -164,7 +162,7 @@ export default function Home() {
 
             {/* 起始日期 */}
             <div className="flex items-center gap-2 mt-2" style={{ color: "#B0A090" }}>
-              <span className="text-base font-medium">从 {formatDisplayDate(startDateStr)} 开始</span>
+              <span className="text-sm sm:text-base font-medium">从 {formatDisplayDate(startDateStr)} 开始</span>
               {/* 手绘风格铅笔图标按钮 - 无圆圈 */}
               <button
                 className="p-1 transition-all hover:opacity-70"
@@ -206,12 +204,10 @@ export default function Home() {
           </div>
 
           {/* ── 右侧头像：Bao ── */}
-          <div className="flex flex-col items-center gap-3 flex-shrink-0 relative z-10">
+          <div className="flex flex-col items-center gap-3 flex-shrink-0 relative z-10 order-3">
             <div
-              className="relative"
+              className="relative w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40"
               style={{
-                width: "160px",
-                height: "160px",
                 borderRadius: "50%",
                 border: "4px solid #4A3728",
                 boxShadow: "4px 4px 0 #4A3728",
@@ -221,7 +217,7 @@ export default function Home() {
             >
               <img src={avatarBao} alt="Bao" className="w-full h-full object-cover" />
             </div>
-            <span className="text-lg font-bold" style={{ color: "#8B6F47" }}>Bao</span>
+            <span className="text-base sm:text-lg font-bold" style={{ color: "#8B6F47" }}>Bao</span>
           </div>
 
         </div>
@@ -317,7 +313,7 @@ export default function Home() {
             <Gift className="w-10 h-10 text-white transition-transform group-hover:scale-110" />
           </div>
           <div className="flex-1">
-            <div className="text-2xl mb-1" style={{ color: "#5D4037", fontWeight: "600" }}>一周年 🎉</div>
+            <div className="text-xl sm:text-2xl mb-1" style={{ color: "#5D4037", fontWeight: "600" }}>一周年 <span className="hidden sm:inline">🎉</span></div>
             <div className="text-base" style={{ color: "#999" }}>还有 {daysToAnniversary} 天</div>
           </div>
           {/* 进度条 */}
@@ -346,7 +342,7 @@ export default function Home() {
           <h2 className="text-2xl" style={{ color: "#5D4037", fontWeight: "600" }}>快速入口</h2>
         </div>
 
-        <div className="grid grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
           {/* 日常记录 */}
           <Link
             to="/daily"
@@ -355,7 +351,7 @@ export default function Home() {
           >
             {/* 圆形填满图片 */}
             <div
-              className="w-32 h-32 rounded-full overflow-hidden"
+              className="w-20 h-20 sm:w-32 sm:h-32 rounded-full overflow-hidden"
               style={{ border: "3px solid #4A3728" }}
             >
               <img
@@ -376,7 +372,7 @@ export default function Home() {
             style={{ background: "white" }}
           >
             <div
-              className="w-32 h-32 rounded-full overflow-hidden"
+              className="w-20 h-20 sm:w-32 sm:h-32 rounded-full overflow-hidden"
               style={{ border: "3px solid #4A3728" }}
             >
               <img
@@ -397,7 +393,7 @@ export default function Home() {
             style={{ background: "white" }}
           >
             <div
-              className="w-32 h-32 rounded-full overflow-hidden"
+              className="w-20 h-20 sm:w-32 sm:h-32 rounded-full overflow-hidden"
               style={{ border: "3px solid #4A3728" }}
             >
               <img
@@ -418,7 +414,7 @@ export default function Home() {
             style={{ background: "white" }}
           >
             <div
-              className="w-32 h-32 rounded-full overflow-hidden"
+              className="w-20 h-20 sm:w-32 sm:h-32 rounded-full overflow-hidden"
               style={{ border: "3px solid #4A3728" }}
             >
               <img
@@ -435,7 +431,7 @@ export default function Home() {
       </div>
 
       {/* 5. 回忆展示画廊 (Memory Gallery) */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         {/* 画廊卡片1 - 田野风景图 */}
         <div
           className="sketch-card overflow-hidden group cursor-pointer"
@@ -479,34 +475,59 @@ export default function Home() {
 
       {/* 6. CTA行动召唤区域 */}
       <div className="sketch-border overflow-hidden" style={{ background: "white" }}>
-        <div className="grid grid-cols-2 gap-0">
-          {/* 左侧大图 */}
-          <div className="overflow-hidden group">
-            <img
-              src={ctaImg}
-              alt="野餐场景"
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              style={{ minHeight: "400px", objectPosition: "center center" }}
-            />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+          {/* 左侧大图 - PC端像照片贴在卡片上，移动端在上半部分 */}
+          <div className="p-4 md:p-6 flex items-center justify-center bg-[#FFF8F0]">
+            {/* PC端版本 - 带晃动动画 */}
+            <div 
+              className="relative group cursor-pointer cta-image-sway hidden md:block"
+              style={{
+                boxShadow: "4px 4px 0 #4A3728",
+                border: "3px solid #4A3728",
+                marginLeft: "20px",
+              }}
+            >
+              <img
+                src={ctaImg}
+                alt="野餐场景"
+                className="w-full h-auto object-cover block"
+                style={{ maxHeight: "300px", display: "block" }}
+              />
+            </div>
+            {/* 移动端版本 - 带晃动动画 */}
+            <div 
+              className="relative group cursor-pointer cta-image-sway md:hidden"
+              style={{
+                boxShadow: "4px 4px 0 #4A3728",
+                border: "3px solid #4A3728",
+              }}
+            >
+              <img
+                src={ctaImg}
+                alt="野餐场景"
+                className="w-full h-auto object-cover block"
+                style={{ maxHeight: "150px", display: "block" }}
+              />
+            </div>
           </div>
 
           {/* 右侧文案 */}
-          <div className="flex flex-col justify-center items-center p-12 gap-6">
+          <div className="flex flex-col justify-center items-center p-6 md:p-12 gap-4 md:gap-6" style={{ background: "#FFF8F0" }}>
             <h2
-              className="text-4xl text-center leading-relaxed"
+              className="text-2xl md:text-4xl text-center leading-relaxed"
               style={{ color: "#5D4037", fontWeight: "600" }}
             >
-              继续创造<br />属于我们的故事
+              继续创造<br className="hidden md:inline" /><span className="md:hidden"> </span>属于我们的故事
             </h2>
             <p
-              className="text-lg text-center leading-relaxed"
+              className="text-base md:text-lg text-center leading-relaxed"
               style={{ color: "#999" }}
             >
               每一天都是新的开始<br />每一刻都值得被记录
             </p>
             <Link
               to="/daily"
-              className="sketch-button px-10 py-4 flex items-center gap-3 mt-4"
+              className="sketch-button px-8 py-3 md:px-10 md:py-4 flex items-center gap-3 mt-2 md:mt-4"
               style={{
                 background: "#F4A261",
                 color: "white",
@@ -535,6 +556,13 @@ export default function Home() {
           15% { opacity: 1; transform: scale(1); }
           80% { opacity: 1; }
           100% { opacity: 0; }
+        }
+        @keyframes sway {
+          0%, 100% { transform: rotate(-2deg); }
+          50% { transform: rotate(2deg); }
+        }
+        .cta-image-sway {
+          animation: sway 3s ease-in-out infinite;
         }
         .sketch-pencil path {
           stroke-dasharray: 3, 2;

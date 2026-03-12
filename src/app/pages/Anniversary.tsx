@@ -69,7 +69,7 @@ const TAB_OPTIONS = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const TODAY = new Date("2026-03-11");
+const TODAY = new Date();
 
 function calcDaysLeft(rawDate: string): number {
   const t = new Date(rawDate);
@@ -500,12 +500,12 @@ export default function Anniversary() {
       })()}
 
       {/* Tabs — no count badge */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {TAB_OPTIONS.map((tab) => {
           const isActive = activeTab === tab.key;
           return (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-              className="px-5 py-2 rounded-full border-2 text-sm transition-all"
+              className="px-2 sm:px-4 py-1 rounded-full border-2 text-xs sm:text-sm transition-all"
               style={{
                 borderColor: isActive ? "#4A3728" : "#E0D0C0",
                 background:  isActive ? "#FF8A5B" : "white",

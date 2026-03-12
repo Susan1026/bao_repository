@@ -637,7 +637,7 @@ function AlbumTab() {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-5">
+      <div className="grid grid-cols-2 gap-3 sm:gap-5">
         {albums.map((album) => {
           const coverUrl = getAlbumCover(album, photos);
           const count = photos.filter((p) => p.albumId === album.id).length;
@@ -649,12 +649,25 @@ function AlbumTab() {
               <div className="relative overflow-hidden" style={{ aspectRatio: "4/3", background: album.color }}>
                 <img src={coverUrl} alt={album.title} className="w-full h-full object-cover" />
                 {/* Photo count badge */}
-                <div className="absolute top-3 right-3 px-3 py-1 rounded-full text-sm border-2 border-[#4A3728]"
+                <div className="absolute top-2 right-2 sm:top-3 sm:right-3 px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm border-2 border-[#4A3728]"
                   style={{ background: "white", color: "#5D4037" }}>
                   {count} 张
                 </div>
+                {/* 编辑/删除按钮 - 移动端在照片上 */}
+                <div className="absolute top-2 left-2 flex gap-1 sm:hidden z-10" onClick={(e) => e.stopPropagation()}>
+                  <button onClick={(e) => { e.stopPropagation(); setEditAlbumId(album.id); }}
+                    className="w-6 h-6 rounded-full flex items-center justify-center transition-colors"
+                    style={{ background: "#F4A26180" }}>
+                    <Edit2 className="w-3 h-3" style={{ color: "#F4A261" }} />
+                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); setDeleteId(album.id); }}
+                    className="w-6 h-6 rounded-full flex items-center justify-center transition-colors"
+                    style={{ background: "#F4C2C280" }}>
+                    <Trash2 className="w-3 h-3" style={{ color: "#E25C7C" }} />
+                  </button>
+                </div>
                 {/* Hover overlay */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity sm:hidden"
                   style={{ background: "rgba(0,0,0,0.2)" }}>
                   <div className="px-4 py-2 rounded-2xl border-2 border-white text-white text-sm"
                     style={{ backdropFilter: "blur(4px)", background: "rgba(255,255,255,0.15)" }}>
@@ -662,13 +675,13 @@ function AlbumTab() {
                   </div>
                 </div>
               </div>
-              <div className="p-5 flex items-start justify-between gap-2">
+              <div className="p-3 sm:p-5 flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-xl mb-1" style={{ color: "#5D4037", fontWeight: "600" }}>{album.title}</h3>
-                  <p className="text-base" style={{ color: "#8B6F47" }}>{album.description}</p>
+                  <h3 className="text-base sm:text-xl mb-0.5 sm:mb-1" style={{ color: "#5D4037", fontWeight: "600" }}>{album.title}</h3>
+                  <p className="text-xs sm:text-base" style={{ color: "#8B6F47" }}>{album.description}</p>
                 </div>
-                {/* 编辑/删除 按钮放在右下角区域 */}
-                <div className="flex gap-2 flex-shrink-0 relative z-10" onClick={(e) => e.stopPropagation()}>
+                {/* PC端编辑/删除按钮 */}
+                <div className="hidden sm:flex gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                   <button onClick={() => setEditAlbumId(album.id)}
                     className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
                     style={{ background: "#F4A26120" }}>
@@ -842,15 +855,19 @@ function ActivitiesTab({ tags, onManageTags }: { tags: CheckinTag[]; onManageTag
     }
   };
 
+  const handleToggle = (id: number) => {
+    setItems((p) => p.map((a) => a.id === id ? { ...a, completed: !a.completed } : a));
+  };
+
   const deletingItem = items.find((a) => a.id === deleteId);
   const filtered = filterTag === "全部" ? items : items.filter((c) => c.tagId === filterTag);
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div className="flex gap-2 flex-wrap max-w-[65%]">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex gap-1 sm:gap-2 flex-wrap max-w-[50%] sm:max-w-[65%]">
           <button onClick={() => setFilterTag("全部")}
-            className="px-3 py-1.5 rounded-full border-2 text-sm flex items-center gap-1 transition-all"
+            className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-full border-2 text-xs sm:text-sm flex items-center gap-1 transition-all"
             style={{ background: filterTag === "全部" ? "#A8DADC" : "white",
               borderColor: filterTag === "全部" ? "#4A3728" : "#E0D0C0",
               color: filterTag === "全部" ? "#5D4037" : "#8B6F47",
@@ -862,7 +879,7 @@ function ActivitiesTab({ tags, onManageTags }: { tags: CheckinTag[]; onManageTag
             const isActive = filterTag === t.id;
             return (
               <button key={t.id} onClick={() => setFilterTag(t.id)}
-                className="px-3 py-1.5 rounded-full border-2 text-sm flex items-center gap-1 transition-all"
+                className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-full border-2 text-xs sm:text-sm flex items-center gap-1 transition-all"
                 style={{ background: isActive ? t.bg : "white",
                   borderColor: isActive ? "#4A3728" : t.border,
                   color: isActive ? t.text : "#8B6F47",
@@ -872,22 +889,20 @@ function ActivitiesTab({ tags, onManageTags }: { tags: CheckinTag[]; onManageTag
               </button>
             );
           })}
-        </div>
-        <div className="flex gap-2 shrink-0">
           <button onClick={onManageTags}
-            className="sketch-button px-4 py-2 flex items-center gap-2 text-sm"
-            style={{ background: "white", color: "#5D4037", borderColor: "#E0D0C0" }}>
-            🏷️ 管理标签
-          </button>
-          <button onClick={() => { setEditItem(undefined); setShowModal(true); }}
-            className="sketch-button px-4 py-2 flex items-center gap-2 text-sm"
-            style={{ background: "#A8DADC", color: "#5D4037" }}>
-            <Plus className="w-4 h-4" />添加活动
+            className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-full border-2 text-xs sm:text-sm flex items-center gap-1 transition-all"
+            style={{ background: "white", borderColor: "#E0D0C0", color: "#8B6F47" }}>
+            🏷️ 管理
           </button>
         </div>
+        <button onClick={() => { setEditItem(undefined); setShowModal(true); }}
+          className="sketch-button px-3 py-1.5 sm:px-4 sm:py-2 flex items-center gap-1.5 text-xs sm:text-sm shrink-0"
+          style={{ background: "#A8DADC", color: "#5D4037" }}>
+          <Plus className="w-3 h-3 sm:w-4 sm:h-4" />添加活动
+        </button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         {filtered.map((item) => (
           <div key={item.id}
             onClick={() => { setEditItem(item); setShowModal(true); }}
@@ -899,13 +914,11 @@ function ActivitiesTab({ tags, onManageTags }: { tags: CheckinTag[]; onManageTag
               style={{ borderColor: "#F4E0D0" }}>
               <img src={item.image || activityDefaultCover} alt={item.title} className="w-full h-full object-cover" />
               
-              {/* Completed Overlay */}
+              {/* Completed checkmark - just a small indicator, no overlay */}
               {item.completed && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[2px]">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center border-2 border-white"
-                    style={{ background: "#F4A261" }}>
-                    <span className="text-white text-xl">✓</span>
-                  </div>
+                <div className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center border-2 border-white"
+                  style={{ background: "#4CAF50" }}>
+                  <span className="text-white text-sm">✓</span>
                 </div>
               )}
             </div>
@@ -931,22 +944,24 @@ function ActivitiesTab({ tags, onManageTags }: { tags: CheckinTag[]; onManageTag
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleSave({ ...item, completed: !item.completed });
+                  handleToggle(item.id);
                 }}
-                className="self-end mt-3 w-7 h-7 rounded-full flex items-center justify-center border-2 transition-colors z-10 hover:opacity-80"
+                className="self-end mt-3 w-7 h-7 rounded-full flex items-center justify-center border-2 transition-colors z-10"
                 style={{ 
-                  borderColor: item.completed ? "#F4A261" : "#E0D0C0",
-                  background: item.completed ? "#F4A261" : "white"
+                  borderColor: item.completed ? "#4A3728" : "#E0D0C0",
+                  background: "white"
                 }}
               >
-                <div className={`w-3 h-3 ${item.completed ? 'opacity-100 block' : 'opacity-0 hidden'}`}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                </div>
+                {item.completed && (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#4CAF50" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                )}
               </button>
 
-              {/* Hover delete btn */}
+              {/* Delete btn - always show on mobile, hover on desktop */}
               <button onClick={(e) => { e.stopPropagation(); setDeleteId(item.id); }}
-                className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity z-10"
                 style={{ background: "#F4C2C2", border: "1.5px solid #4A3728" }}>
                 <Trash2 className="w-3.5 h-3.5" style={{ color: "#5D4037" }} />
               </button>
@@ -993,32 +1008,56 @@ function ManageTagsModal({ tags, onClose, onSave, onDelete }: {
   const [name, setName] = useState("");
   const [icon, setIcon] = useState(TAG_ICONS[0]);
   const [palette, setPalette] = useState(0);
+  const [localTags, setLocalTags] = useState<CheckinTag[]>(tags);
+
+  const handleAddTag = () => {
+    if (name.trim()) {
+      const newTag = { id: `temp_${Date.now()}`, name: name.trim(), icon, ...TAG_PALETTES[palette] };
+      setLocalTags((p) => [...p, newTag]);
+      setName("");
+    }
+  };
+
+  const handleRemoveTag = (id: string) => {
+    setLocalTags((p) => p.filter((t) => t.id !== id));
+  };
+
+  const handleConfirm = () => {
+    localTags.forEach((t) => {
+      if (!tags.find((ot) => ot.id === t.id)) {
+        onSave({ name: t.name, icon: t.icon, bg: t.bg, text: t.text, border: t.border });
+      }
+    });
+    tags.forEach((t) => {
+      if (!localTags.find((lt) => lt.id === t.id)) {
+        onDelete(t.id);
+      }
+    });
+    onClose();
+  };
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4" onClick={(e) => e.stopPropagation()}>
       <div className="sketch-card w-full max-w-sm flex flex-col" style={{ background: "#FFF8F0", maxHeight: "90vh" }} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 pt-6 pb-4 flex-shrink-0">
           <h2 className="text-2xl" style={{ color: "#5D4037" }}>🏷️ 管理标签</h2>
-          <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-[#F4C2C2]/40 transition-colors">
-            <X className="w-4 h-4" style={{ color: "#5D4037" }} />
-          </button>
         </div>
         <div className="flex-1 overflow-y-auto px-6 space-y-5 pb-4">
           <div className="space-y-2">
             <label className="text-xs block" style={{ color: "#8B6F47" }}>现有标签</label>
             <div className="flex flex-wrap gap-2">
-              {tags.map((t) => (
+              {localTags.map((t) => (
                 <div key={t.id} className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 text-sm"
                   style={{ background: t.bg, borderColor: t.border, color: t.text }}>
                   <span>{t.icon}</span>
                   <span>{t.name}</span>
-                  <button onClick={() => onDelete(t.id)} className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-white flex items-center justify-center border-2 border-[#E25C7C] text-[#E25C7C] opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onClick={() => handleRemoveTag(t.id)} className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-white flex items-center justify-center border-2 border-[#E25C7C] text-[#E25C7C] opacity-100 group-hover:opacity-100 transition-opacity">
                     <X className="w-3 h-3" />
                   </button>
                 </div>
               ))}
             </div>
-            {tags.length === 0 && <p className="text-sm text-[#B0A090]">暂无标签</p>}
+            {localTags.length === 0 && <p className="text-sm text-[#B0A090]">暂无标签</p>}
           </div>
           <div className="pt-4" style={{ borderTop: "1.5px dashed #F4E0D0" }}>
             <label className="text-xs block mb-2" style={{ color: "#8B6F47" }}>新建标签</label>
@@ -1044,13 +1083,19 @@ function ManageTagsModal({ tags, onClose, onSave, onDelete }: {
               ))}
             </div>
 
-            <button onClick={() => { if (name.trim()) { onSave({ name: name.trim(), icon, ...TAG_PALETTES[palette] }); setName(""); } }}
+            <button onClick={handleAddTag}
               disabled={!name.trim()}
               className="w-full py-2.5 rounded-2xl border-2 border-[#4A3728] text-sm hover:-translate-y-0.5 transition-all disabled:opacity-40"
               style={{ background: "#F4A261", color: "white", fontWeight: "600" }}>
               添加标签
             </button>
           </div>
+        </div>
+        <div className="flex gap-3 px-6 py-4 flex-shrink-0" style={{ borderTop: "1.5px solid #F4E0D0" }}>
+          <button onClick={onClose} className="flex-1 py-3 rounded-2xl border-2 border-[#4A3728] text-sm hover:-translate-y-0.5 transition-transform"
+            style={{ color: "#5D4037", background: "white" }}>取消</button>
+          <button onClick={handleConfirm} className="flex-1 py-3 rounded-2xl border-2 border-[#4A3728] text-base hover:-translate-y-0.5 transition-all"
+            style={{ background: "#FFD54F", color: "#5D4037", fontWeight: "600" }}>确认</button>
         </div>
       </div>
     </div>
@@ -1175,10 +1220,10 @@ function CheckinTab() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div className="flex gap-2 flex-wrap max-w-[65%]">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex gap-1 sm:gap-2 flex-wrap max-w-[50%] sm:max-w-[65%]">
           <button onClick={() => setFilterTag("全部")}
-            className="px-3 py-1.5 rounded-full border-2 text-sm flex items-center gap-1 transition-all"
+            className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-full border-2 text-xs sm:text-sm flex items-center gap-1 transition-all"
             style={{ background: filterTag === "全部" ? "#F4A261" : "white",
               borderColor: filterTag === "全部" ? "#4A3728" : "#E0D0C0",
               color: filterTag === "全部" ? "white" : "#8B6F47",
@@ -1190,7 +1235,7 @@ function CheckinTab() {
             const isActive = filterTag === t.id;
             return (
               <button key={t.id} onClick={() => setFilterTag(t.id)}
-                className="px-3 py-1.5 rounded-full border-2 text-sm flex items-center gap-1 transition-all"
+                className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-full border-2 text-xs sm:text-sm flex items-center gap-1 transition-all"
                 style={{ background: isActive ? t.bg : "white",
                   borderColor: isActive ? "#4A3728" : t.border,
                   color: isActive ? t.text : "#8B6F47",
@@ -1200,19 +1245,17 @@ function CheckinTab() {
               </button>
             );
           })}
-        </div>
-        <div className="flex gap-2 shrink-0">
           <button onClick={() => setShowTagModal(true)}
-            className="sketch-button px-4 py-2 flex items-center gap-2 text-sm"
-            style={{ background: "white", color: "#5D4037", borderColor: "#E0D0C0" }}>
-            🏷️ 管理标签
-          </button>
-          <button onClick={() => { setEditItem(undefined); setShowModal(true); }}
-            className="sketch-button px-4 py-2 flex items-center gap-2 text-sm"
-            style={{ background: "#FFD54F", color: "#5D4037" }}>
-            <Plus className="w-4 h-4" />添加打卡
+            className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-full border-2 text-xs sm:text-sm flex items-center gap-1 transition-all"
+            style={{ background: "white", borderColor: "#E0D0C0", color: "#8B6F47" }}>
+            🏷️ 管理
           </button>
         </div>
+        <button onClick={() => { setEditItem(undefined); setShowModal(true); }}
+          className="sketch-button px-3 py-1.5 sm:px-4 sm:py-2 flex items-center gap-1.5 text-xs sm:text-sm shrink-0"
+          style={{ background: "#FFD54F", color: "#5D4037" }}>
+          <Plus className="w-3 h-3 sm:w-4 sm:h-4" />添加打卡
+        </button>
       </div>
 
       <div className="space-y-3">

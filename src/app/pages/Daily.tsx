@@ -469,19 +469,19 @@ function SketchSelect({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-2xl border-2 text-sm transition-all whitespace-nowrap"
+        className="flex items-center gap-1 pl-2 sm:pl-3 pr-1.5 sm:pr-2 py-1 rounded-xl sm:rounded-2xl border-2 text-xs sm:text-sm transition-all whitespace-nowrap"
         style={{
           borderColor: value ? "#4A3728" : "#E0D0C0",
           background: value ? "#FFF8F0" : "white",
           color: value ? "#5D4037" : "#B0A090",
           boxShadow: value ? "2px 2px 0 #4A3728" : "none",
           transform: value ? "translate(-1px,-1px)" : "none",
-          minWidth: `${minWidth}px`,
+          minWidth: `max(${minWidth}px, 85px)`,
         }}
       >
         <span>{selected ? selected.label : placeholder}</span>
         <ChevronDown
-          className="w-3.5 h-3.5 flex-shrink-0 transition-transform"
+          className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0 transition-transform"
           style={{ color: "#B0A090", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
         />
       </button>
@@ -644,26 +644,25 @@ export default function Daily() {
       </div>
 
       {/* Year + Month dropdown filter */}
-      {/* Year + Month dropdown filter */}
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-6">
         <div className="flex items-center gap-2">
-          <label className="text-sm flex-shrink-0" style={{ color: "#8B6F47" }}>年份</label>
+          <label className="text-xs sm:text-sm flex-shrink-0" style={{ color: "#8B6F47" }}>年份</label>
           <SketchSelect
             value={filterYear}
             onChange={(v) => { setFilterYear(v); setFilterMonth(""); }}
             options={allYears.map((y) => ({ value: y, label: `${y}年` }))}
             placeholder="全部年份"
-            minWidth={88}
+            minWidth={96}
           />
         </div>
         <div className="flex items-center gap-2">
-          <label className="text-sm flex-shrink-0" style={{ color: "#8B6F47" }}>月份</label>
+          <label className="text-xs sm:text-sm flex-shrink-0" style={{ color: "#8B6F47" }}>月份</label>
           <SketchSelect
             value={filterMonth}
             onChange={setFilterMonth}
             options={availableMonths.map((m) => ({ value: m, label: `${parseInt(m)}月` }))}
             placeholder="全部月份"
-            minWidth={88}
+            minWidth={96}
           />
         </div>
       </div>

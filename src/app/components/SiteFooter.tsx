@@ -29,7 +29,7 @@ export function SiteFooter() {
         <Heart className="w-5 h-5" style={{ color: "#F4C2C2" }} fill="#F4C2C2" />
         <p className="text-base" style={{ color: "#5D4037" }}>Bao & Zhang 的恋爱小窝</p>
         <p className="text-sm" style={{ color: "#C0B0A0" }}>
-          🐾 每一天都是礼物 · 2026年3月11日
+          🐾 每一天都是礼物 · {new Date().getFullYear()}年{new Date().getMonth() + 1}月{new Date().getDate()}日
         </p>
       </div>
     </div>

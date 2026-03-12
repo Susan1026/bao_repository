@@ -307,13 +307,13 @@ function BoardCard({
         <button
           onClick={onToggle}
           title={isDone ? "撤销完成" : "标记为已实现"}
-          className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+          className="w-9 h-9 rounded-full flex items-center justify-center transition-all"
           style={isDone
-            ? { background: "#4CAF50", border: "2.5px solid #388E3C", boxShadow: "0 2px 6px rgba(76,175,80,0.35)" }
+            ? { background: "white", border: "2.5px solid #4A3728" }
             : { background: "white", border: "2.5px dashed #C8B8A8" }
           }>
           {isDone
-            ? <Check className="w-5 h-5 text-white" strokeWidth={3} />
+            ? <Check className="w-5 h-5" style={{ color: "#4CAF50" }} strokeWidth={3} />
             : <Check className="w-5 h-5" style={{ color: "#D0C0B0" }} strokeWidth={2} />
           }
         </button>
@@ -351,12 +351,12 @@ function ListRow({
       {/* Checkbox circle */}
       <button onClick={onToggle}
         title={isDone ? "撤销完成" : "标记为已实现"}
-        className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all hover:scale-110"
+        className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
         style={isDone
-          ? { background: "#4CAF50", border: "2px solid #388E3C" }
+          ? { background: "white", border: "2px solid #4A3728" }
           : { background: "white", border: "2px dashed #C8B8A8" }
         }>
-        {isDone && <Check className="w-4 h-4 text-white" strokeWidth={3} />}
+        {isDone && <Check className="w-4 h-4" style={{ color: "#4CAF50" }} strokeWidth={3} />}
       </button>
 
       {/* Title + description — no strikethrough */}
@@ -437,19 +437,19 @@ function TagDropdown({
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-2xl border-2 text-sm transition-all whitespace-nowrap"
+        className="flex items-center gap-1 px-2 py-1 rounded-full border-2 text-xs sm:text-sm transition-all whitespace-nowrap"
         style={{
           borderColor: value ? "#4A3728" : "#E0D0C0",
           background:  value ? (activeStyle?.bg ?? "#FFF8F0") : "white",
           color:       value ? (activeStyle?.text ?? "#5D4037") : "#8B6F47",
           boxShadow:   value ? "2px 2px 0 #4A3728" : "none",
           transform:   value ? "translate(-1px,-1px)" : "none",
-          fontWeight:  value ? "700" : "400",
+          fontWeight:  value ? "600" : "400",
         }}
       >
         <span>{value || "全部标签"}</span>
         <ChevronDown
-          className="w-3.5 h-3.5 flex-shrink-0 transition-transform"
+          className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0 transition-transform"
           style={{ color: "#B0A090", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
         />
       </button>
@@ -573,54 +573,81 @@ export default function Wishes() {
       </div>
 
       {/* 统计 */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="sketch-card p-4 text-center" style={{ background: "#FFF9C4" }}>
-          <div className="text-3xl mb-1" style={{ color: "#5D4037", fontWeight: "700" }}>{totalCount}</div>
-          <div className="text-sm" style={{ color: "#8B6F47" }}>全部心愿</div>
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        <div className="sketch-card p-2 sm:p-4 text-center" style={{ background: "#FFF9C4" }}>
+          <div className="text-2xl sm:text-3xl mb-0.5 sm:mb-1" style={{ color: "#5D4037", fontWeight: "700" }}>{totalCount}</div>
+          <div className="text-xs sm:text-sm" style={{ color: "#8B6F47" }}>全部心愿</div>
         </div>
-        <div className="sketch-card p-4 text-center" style={{ background: "#FFE6F0" }}>
-          <div className="text-3xl mb-1" style={{ color: "#5D4037", fontWeight: "700" }}>{pendingCount}</div>
-          <div className="text-sm" style={{ color: "#8B6F47" }}>待实现</div>
+        <div className="sketch-card p-2 sm:p-4 text-center" style={{ background: "#FFE6F0" }}>
+          <div className="text-2xl sm:text-3xl mb-0.5 sm:mb-1" style={{ color: "#5D4037", fontWeight: "700" }}>{pendingCount}</div>
+          <div className="text-xs sm:text-sm" style={{ color: "#8B6F47" }}>待实现</div>
         </div>
-        <div className="sketch-card p-4 text-center" style={{ background: "#E8F5E9" }}>
-          <div className="text-3xl mb-1" style={{ color: "#5D4037", fontWeight: "700" }}>{completedCount}</div>
+        <div className="sketch-card p-2 sm:p-4 text-center" style={{ background: "#E8F5E9" }}>
+          <div className="text-2xl sm:text-3xl mb-0.5 sm:mb-1" style={{ color: "#5D4037", fontWeight: "700" }}>{completedCount}</div>
           <div className="text-sm" style={{ color: "#8B6F47" }}>已完成</div>
         </div>
       </div>
 
       {/* Toolbar: filter tabs + view toggle */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          {FILTER_TABS.map((tab) => {
-            const isActive = filterTab === tab.key;
-            return (
-              <button key={tab.key} onClick={() => setFilterTab(tab.key)}
-                className="px-4 py-1.5 rounded-full border-2 text-sm transition-all"
-                style={{
-                  borderColor: isActive ? "#4A3728" : "#E0D0C0",
-                  background:  isActive ? "#FFD54F" : "white",
-                  color:       isActive ? "#5D4037" : "#8B6F47",
-                  boxShadow:   isActive ? "2px 2px 0 #4A3728" : "none",
-                  transform:   isActive ? "translate(-1px,-1px)" : "none",
-                  fontWeight:  isActive ? "600" : "400",
-                }}>
-                {tab.label}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        {/* 左侧：全部/待实现/已实现 + 标签筛选 */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+          {/* 移动端第一行：全部/待实现/已实现 + 标签筛选 */}
+          <div className="flex items-center justify-between gap-2">
+            {/* 全部/待实现/已实现 */}
+            <div className="flex flex-wrap items-center gap-2">
+              {FILTER_TABS.map((tab) => {
+                const isActive = filterTab === tab.key;
+                return (
+                  <button key={tab.key} onClick={() => setFilterTab(tab.key)}
+                    className="px-2 sm:px-4 py-1 rounded-full border-2 text-xs sm:text-sm transition-all"
+                    style={{
+                      borderColor: isActive ? "#4A3728" : "#E0D0C0",
+                      background:  isActive ? "#FFD54F" : "white",
+                      color:       isActive ? "#5D4037" : "#8B6F47",
+                      boxShadow:   isActive ? "2px 2px 0 #4A3728" : "none",
+                      transform:   isActive ? "translate(-1px,-1px)" : "none",
+                      fontWeight:  isActive ? "600" : "400",
+                    }}>
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+            {/* 标签筛选 */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs sm:text-sm" style={{ color: "#B0A090" }}>标签</span>
+              <TagDropdown
+                value={filterTag}
+                tags={tags}
+                allTags={tags}
+                onChange={setFilterTag}
+              />
+            </div>
+            {/* 视图切换图标 - 移动端在最右侧 */}
+            <div className="flex sm:hidden items-center gap-1 p-1 rounded-2xl border-2"
+              style={{ borderColor: "#4A3728", background: "white", boxShadow: "2px 2px 0 #4A3728" }}>
+              <button onClick={() => setViewMode("board")}
+                className="w-8 h-8 rounded-xl flex items-center justify-center transition-all"
+                style={{ background: viewMode === "board" ? "#FFD54F" : "transparent", color: viewMode === "board" ? "#5D4037" : "#B0A090" }}
+                title="看板视图">
+                <LayoutGrid className="w-4 h-4" />
               </button>
-            );
-          })}
-          {/* Tag dropdown */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm" style={{ color: "#B0A090" }}>标签</span>
-            <TagDropdown
-              value={filterTag}
-              tags={tags}
-              allTags={tags}
-              onChange={setFilterTag}
-            />
+              <button onClick={() => setViewMode("list")}
+                className="w-8 h-8 rounded-xl flex items-center justify-center transition-all"
+                style={{ background: viewMode === "list" ? "#FFD54F" : "transparent", color: viewMode === "list" ? "#5D4037" : "#B0A090" }}
+                title="列表视图">
+                <List className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+          {/* 移动端第二行（PC端没有这行） */}
+          <div className="flex flex-wrap items-center gap-2 sm:hidden">
           </div>
         </div>
 
-        <div className="flex items-center gap-1 p-1 rounded-2xl border-2"
+        {/* PC端视图切换图标 - 在最右侧 */}
+        <div className="hidden sm:flex items-center gap-1 p-1 rounded-2xl border-2"
           style={{ borderColor: "#4A3728", background: "white", boxShadow: "2px 2px 0 #4A3728" }}>
           <button onClick={() => setViewMode("board")}
             className="w-8 h-8 rounded-xl flex items-center justify-center transition-all"
@@ -644,7 +671,7 @@ export default function Wishes() {
           <p className="text-base" style={{ color: "#8B6F47" }}>还没有心愿，点击"添加心愿"许下第一个愿望吧～</p>
         </div>
       ) : viewMode === "board" ? (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           {filtered.map((w) => (
             <BoardCard key={w.id} wish={w} allTags={tags}
               onToggle={() => handleToggle(w.id)}
