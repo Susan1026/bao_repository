@@ -574,12 +574,17 @@ export default function Daily() {
     try {
       // 移除 comments 字段，不发送到 Supabase
       const { comments, ...recordData } = r as any;
+      console.log('Saving record:', recordData);
       
       if (editingRecord) {
+        console.log('Updating record with id:', editingRecord.id.toString());
         const updated = await dailyRecordsService.update(editingRecord.id.toString(), recordData);
+        console.log('Updated:', updated);
         setRecords((prev) => prev.map((rec) => rec.id === editingRecord.id ? { ...rec, ...updated } : rec));
       } else {
+        console.log('Creating new record');
         const created = await dailyRecordsService.create(recordData);
+        console.log('Created:', created);
         // 转换 id 格式并添加空 comments
         const mappedCreated = {
           ...created,

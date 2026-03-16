@@ -142,13 +142,18 @@ export const dailyRecordsService = {
   },
 
   async create(record: Omit<DailyRecord, 'id' | 'created_at' | 'updated_at'>): Promise<DailyRecord> {
+    console.log('Supabase create:', record);
     const { data, error } = await supabase
       .from('daily_records')
       .insert(record)
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error:', error);
+      throw error;
+    }
+    console.log('Supabase result:', data);
     return data;
   },
 
