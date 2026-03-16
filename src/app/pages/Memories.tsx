@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Heart, Plus, MapPin, Utensils, Star, X, Edit2, Trash2, Smile,
   Camera, ClipboardList, AlertTriangle, ChevronLeft, ChevronRight,
