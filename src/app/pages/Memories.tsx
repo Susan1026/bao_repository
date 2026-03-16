@@ -4,6 +4,7 @@ import {
   Camera, ClipboardList, AlertTriangle, ChevronLeft, ChevronRight,
   Upload, ImageIcon,
 } from "lucide-react";
+import { albumsService, photosService, activitiesService, checkinsService, storageService } from "../../lib/services";
 // 本地默认图片
 const albumDefaultCover = "/images/album_default.jpg";
 const activityDefaultCover = "/images/activity_default.jpg";
@@ -566,40 +567,97 @@ function AlbumDetail({ album, photos, onBack, onUpdateAlbum, onAddPhoto, onDelet
 // ─── AlbumTab ─────────────────────────────────────────────────────────────────
 
 function AlbumTab() {
-  const [albums,      setAlbums]      = useState<Album[]>(INIT_ALBUMS);
-  const [photos,      setPhotos]      = useState<Photo[]>(INIT_PHOTOS);
+  const [albums, setAlbums] = useState<Album[]>([]);
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [loading, setLoading] = useState(true);
   const [openAlbumId, setOpenAlbumId] = useState<number | null>(null);
-  const [showCreate,  setShowCreate]  = useState(false);
-  const [deleteId,    setDeleteId]    = useState<number | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
   const [editAlbumId, setEditAlbumId] = useState<number | null>(null);
+
+  // 从 Supabase 加载数据
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [albumsData, allPhotos] = await Promise.all([
+          albumsService.getAll(),
+          Promise.all((await albumsService.getAll()).map(async (album) => {
+            const photosData = await photosService.getByAlbumId(album.id);
+            return photosData.map(p => ({ ...p, albumId: parseInt(album.id.slice(0, 8), 16) }));
+          })).then(p => p.flat())
+        ]);
+        
+        if (albumsData.length > 0) {
+          setAlbums(albumsData.map(a => ({
+            ...a,
+            id: parseInt(a.id.slice(0, 8), 16),
+            coverPhotoId: a.cover_photo_id ? parseInt(a.cover_photo_id.slice(0, 8), 16) : null
+          })));
+          setPhotos(allPhotos.map(p => ({
+            ...p,
+            id: parseInt(p.id.slice(0, 8), 16),
+            albumId: parseInt(p.album_id.slice(0, 8), 16)
+          })));
+        }
+      } catch (error) {
+        console.error('Failed to load albums:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
 
   const COLORS = ["#FFE6F0", "#E3F2FD", "#FFF9C4", "#F3E5F5", "#E8F5E9", "#FFF3E0"];
 
-  const handleCreate = (a: { title: string; description: string }) => {
-    setAlbums((prev) => [...prev, {
-      id: Date.now(),
-      title: a.title,
-      description: a.description,
-      coverPhotoId: null,
-      color: COLORS[prev.length % COLORS.length],
-    }]);
+  const handleCreate = async (a: { title: string; description: string }) => {
+    try {
+      const created = await albumsService.create({
+        title: a.title,
+        description: a.description,
+        color: COLORS[albums.length % COLORS.length]
+      });
+      setAlbums((prev) => [...prev, { ...created, id: parseInt(created.id.slice(0, 8), 16), coverPhotoId: null }]);
+    } catch (error) {
+      console.error('Failed to create album:', error);
+    }
   };
 
-  const handleUpdateAlbum = (albumId: number, data: { title: string; description: string; coverPhotoId: number | null }) => {
-    setAlbums((prev) => prev.map((a) => a.id === albumId ? { ...a, ...data } : a));
+  const handleUpdateAlbum = async (albumId: number, data: { title: string; description: string; coverPhotoId: number | null }) => {
+    try {
+      await albumsService.update(albumId.toString(), {
+        title: data.title,
+        description: data.description,
+        cover_photo_id: data.coverPhotoId ? data.coverPhotoId.toString() : null
+      });
+      setAlbums((prev) => prev.map((a) => a.id === albumId ? { ...a, ...data } : a));
+    } catch (error) {
+      console.error('Failed to update album:', error);
+    }
   };
 
-  const handleAddPhoto = (albumId: number, url: string) => {
-    const newPhoto: Photo = { id: Date.now(), albumId, url };
-    setPhotos((prev) => [...prev, newPhoto]);
+  const handleAddPhoto = async (albumId: number, url: string) => {
+    try {
+      const created = await photosService.create({
+        album_id: (await albumsService.getAll())[Math.floor(albumId / 10000000)]?.id || '',
+        url
+      });
+      setPhotos((prev) => [...prev, { ...created, id: parseInt(created.id.slice(0, 8), 16), albumId }]);
+    } catch (error) {
+      console.error('Failed to add photo:', error);
+    }
   };
 
-  const handleDeletePhoto = (albumId: number, photoId: number) => {
-    setPhotos((prev) => prev.filter((p) => p.id !== photoId));
-    // If deleted photo was the cover, clear coverPhotoId
-    setAlbums((prev) => prev.map((a) =>
-      a.id === albumId && a.coverPhotoId === photoId ? { ...a, coverPhotoId: null } : a
-    ));
+  const handleDeletePhoto = async (albumId: number, photoId: number) => {
+    try {
+      await photosService.delete(photoId.toString());
+      setPhotos((prev) => prev.filter((p) => p.id !== photoId));
+      setAlbums((prev) => prev.map((a) =>
+        a.id === albumId && a.coverPhotoId === photoId ? { ...a, coverPhotoId: null } : a
+      ));
+    } catch (error) {
+      console.error('Failed to delete photo:', error);
+    }
   };
 
   const handleSetCover = (albumId: number, photoId: number) => {
@@ -841,22 +899,65 @@ function ActivityModal({ editItem, tags, onClose, onSave, onManageTags }: {
 }
 
 function ActivitiesTab({ tags, onManageTags }: { tags: CheckinTag[]; onManageTags: () => void }) {
-  const [items,     setItems]     = useState<Activity[]>(INIT_ACTIVITIES);
+  const [items, setItems] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [editItem,  setEditItem]  = useState<Activity | undefined>();
-  const [deleteId,  setDeleteId]  = useState<number | null>(null);
+  const [editItem, setEditItem] = useState<Activity | undefined>();
+  const [deleteId, setDeleteId] = useState<number | null>(null);
   const [filterTag, setFilterTag] = useState<string>("全部");
 
-  const handleSave = (data: Omit<Activity, "id">) => {
-    if (editItem) {
-      setItems((p) => p.map((a) => a.id === editItem.id ? { ...a, ...data } : a));
-    } else {
-      setItems((p) => [...p, { id: Date.now(), ...data }]);
+  // 从 Supabase 加载数据
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await activitiesService.getAll();
+        if (data.length > 0) {
+          setItems(data.map(a => ({
+            ...a,
+            id: parseInt(a.id.slice(0, 8), 16),
+            tagId: a.tag_id || ''
+          })));
+        }
+      } catch (error) {
+        console.error('Failed to load activities:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const handleSave = async (data: Omit<Activity, "id">) => {
+    try {
+      if (editItem) {
+        await activitiesService.toggleComplete(editItem.id.toString(), data.completed);
+        setItems((p) => p.map((a) => a.id === editItem.id ? { ...a, ...data } : a));
+      } else {
+        const created = await activitiesService.create({
+          title: data.title,
+          date: data.date,
+          note: data.note,
+          location: data.location,
+          image: data.image,
+          completed: data.completed,
+          tag_id: data.tagId
+        });
+        setItems((p) => [...p, { ...created, id: parseInt(created.id.slice(0, 8), 16), tagId: created.tag_id || '' }]);
+      }
+    } catch (error) {
+      console.error('Failed to save activity:', error);
     }
   };
 
-  const handleToggle = (id: number) => {
-    setItems((p) => p.map((a) => a.id === id ? { ...a, completed: !a.completed } : a));
+  const handleToggle = async (id: number) => {
+    const item = items.find(a => a.id === id);
+    if (!item) return;
+    try {
+      await activitiesService.toggleComplete(id.toString(), !item.completed);
+      setItems((p) => p.map((a) => a.id === id ? { ...a, completed: !a.completed } : a));
+    } catch (error) {
+      console.error('Failed to toggle activity:', error);
+    }
   };
 
   const deletingItem = items.find((a) => a.id === deleteId);
@@ -1190,19 +1291,53 @@ function CheckinModal({ editItem, tags, onClose, onSave }: {
 }
 
 function CheckinTab() {
-  const [items,     setItems]     = useState<Checkin[]>(INIT_CHECKINS);
-  const [tags,      setTags]      = useState<CheckinTag[]>(INIT_TAGS);
+  const [items, setItems] = useState<Checkin[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [tags, setTags] = useState<CheckinTag[]>(INIT_TAGS);
   const [filterTag, setFilterTag] = useState<string>("全部");
   const [showModal, setShowModal] = useState(false);
   const [showTagModal, setShowTagModal] = useState(false);
-  const [editItem,  setEditItem]  = useState<Checkin | undefined>();
-  const [deleteId,  setDeleteId]  = useState<number | null>(null);
+  const [editItem, setEditItem] = useState<Checkin | undefined>();
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  const handleSave = (data: Omit<Checkin, "id">) => {
-    if (editItem) {
-      setItems((p) => p.map((c) => c.id === editItem.id ? { ...c, ...data } : c));
-    } else {
-      setItems((p) => [...p, { id: Date.now(), ...data }]);
+  // 从 Supabase 加载数据
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await checkinsService.getAll();
+        if (data.length > 0) {
+          setItems(data.map(c => ({
+            ...c,
+            id: parseInt(c.id.slice(0, 8), 16),
+            tagId: c.tag_id
+          })));
+        }
+      } catch (error) {
+        console.error('Failed to load checkins:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const handleSave = async (data: Omit<Checkin, "id">) => {
+    try {
+      if (editItem) {
+        setItems((p) => p.map((c) => c.id === editItem.id ? { ...c, ...data } : c));
+      } else {
+        const created = await checkinsService.create({
+          name: data.name,
+          tag_id: data.tagId,
+          date: data.date,
+          location: data.location || '',
+          rating: data.rating,
+          review: data.review
+        });
+        setItems((p) => [...p, { ...created, id: parseInt(created.id.slice(0, 8), 16), tagId: created.tag_id }]);
+      }
+    } catch (error) {
+      console.error('Failed to save checkin:', error);
     }
   };
 

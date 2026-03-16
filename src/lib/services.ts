@@ -18,6 +18,7 @@ export interface DailyRecord {
   mood?: string;
   likes?: number;
   liked?: boolean;
+  date: string;
   created_at: string;
   updated_at?: string;
 }
@@ -37,6 +38,8 @@ export interface Anniversary {
   date: string;
   description?: string;
   is_annual: boolean;
+  icon_key?: string;
+  color?: string;
   created_at: string;
 }
 
@@ -44,10 +47,51 @@ export interface Wish {
   id: string;
   title: string;
   description?: string;
+  category: string;
   status: 'pending' | 'completed';
   target_date?: string;
   created_at: string;
   completed_at?: string;
+}
+
+export interface Album {
+  id: string;
+  title: string;
+  description?: string;
+  cover_photo_id?: string;
+  color: string;
+  created_at: string;
+}
+
+export interface Photo {
+  id: string;
+  album_id: string;
+  url: string;
+  caption?: string;
+  created_at: string;
+}
+
+export interface Activity {
+  id: string;
+  title: string;
+  date: string;
+  note?: string;
+  location?: string;
+  image?: string;
+  completed: boolean;
+  tag_id?: string;
+  created_at: string;
+}
+
+export interface Checkin {
+  id: string;
+  name: string;
+  tag_id: string;
+  date: string;
+  location?: string;
+  rating: number;
+  review?: string;
+  created_at: string;
 }
 
 export const coupleSettingsService = {
@@ -247,6 +291,159 @@ export const wishesService = {
   async delete(id: string): Promise<void> {
     const { error } = await supabase
       .from('wishes')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+  },
+};
+
+export const albumsService = {
+  async getAll(): Promise<Album[]> {
+    const { data, error } = await supabase
+      .from('albums')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
+  },
+
+  async create(album: Omit<Album, 'id' | 'created_at'>): Promise<Album> {
+    const { data, error } = await supabase
+      .from('albums')
+      .insert(album)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async update(id: string, album: Partial<Album>): Promise<Album> {
+    const { data, error } = await supabase
+      .from('albums')
+      .update(album)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('albums')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+  },
+};
+
+export const photosService = {
+  async getByAlbumId(albumId: string): Promise<Photo[]> {
+    const { data, error } = await supabase
+      .from('photos')
+      .select('*')
+      .eq('album_id', albumId)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
+  },
+
+  async create(photo: Omit<Photo, 'id' | 'created_at'>): Promise<Photo> {
+    const { data, error } = await supabase
+      .from('photos')
+      .insert(photo)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('photos')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+  },
+};
+
+export const activitiesService = {
+  async getAll(): Promise<Activity[]> {
+    const { data, error } = await supabase
+      .from('activities')
+      .select('*')
+      .order('date', { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
+  },
+
+  async create(activity: Omit<Activity, 'id' | 'created_at'>): Promise<Activity> {
+    const { data, error } = await supabase
+      .from('activities')
+      .insert(activity)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async toggleComplete(id: string, completed: boolean): Promise<Activity> {
+    const { data, error } = await supabase
+      .from('activities')
+      .update({ completed })
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('activities')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+  },
+};
+
+export const checkinsService = {
+  async getAll(): Promise<Checkin[]> {
+    const { data, error } = await supabase
+      .from('checkins')
+      .select('*')
+      .order('date', { ascending: false });
+    
+    if (error) throw error;
+    return data || [];
+  },
+
+  async create(checkin: Omit<Checkin, 'id' | 'created_at'>): Promise<Checkin> {
+    const { data, error } = await supabase
+      .from('checkins')
+      .insert(checkin)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('checkins')
       .delete()
       .eq('id', id);
     
