@@ -540,7 +540,13 @@ export default function Daily() {
       try {
         const data = await dailyRecordsService.getAll();
         if (data.length > 0) {
-          setRecords(data);
+          // 转换 id 为 number 格式
+          const mappedData = data.map((r: any) => ({
+            ...r,
+            id: parseInt(r.id.slice(0, 8), 16),
+            comments: []
+          }));
+          setRecords(mappedData);
         }
       } catch (error) {
         console.error('Failed to load records:', error);
@@ -566,12 +572,21 @@ export default function Daily() {
 
   const handleSave = async (r: Omit<DailyRecordType, 'id' | 'created_at'>) => {
     try {
+      // 移除 comments 字段，不发送到 Supabase
+      const { comments, ...recordData } = r as any;
+      
       if (editingRecord) {
-        const updated = await dailyRecordsService.update(editingRecord.id, r);
+        const updated = await dailyRecordsService.update(editingRecord.id.toString(), recordData);
         setRecords((prev) => prev.map((rec) => rec.id === editingRecord.id ? { ...rec, ...updated } : rec));
       } else {
-        const created = await dailyRecordsService.create(r as any);
-        setRecords((prev) => [created, ...prev].sort((a, b) => b.date.localeCompare(a.date)));
+        const created = await dailyRecordsService.create(recordData);
+        // 转换 id 格式并添加空 comments
+        const mappedCreated = {
+          ...created,
+          id: parseInt(created.id.slice(0, 8), 16),
+          comments: []
+        };
+        setRecords((prev) => [mappedCreated, ...prev].sort((a, b) => b.date.localeCompare(a.date)));
       }
     } catch (error) {
       console.error('Failed to save record:', error);
