@@ -3,6 +3,16 @@ import {
   Star, Plus, Check, Sparkles, X, Edit2, Trash2,
   LayoutGrid, List, Tag, AlertTriangle, ChevronDown,
 } from "lucide-react";
+import { wishesService } from "../../lib/services";
+
+type ViewMode = "board" | "list";
+type FilterTab = "all" | "pending" | "completed";
+
+const FILTER_TABS: { key: FilterTab; label: string }[] = [
+  { key: "all", label: "全部" },
+  { key: "pending", label: "待实现" },
+  { key: "completed", label: "已实现" },
+];
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -487,58 +497,95 @@ function TagDropdown({
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-const INIT: WishItem[] = [
-  { id: 1, title: "一起去看极光",    category: "旅行", description: "想和你在冰岛看一次绚丽的北极光，感受大自然的魔法", status: "pending" },
-  { id: 2, title: "学会做你最爱的菜", category: "美食", description: "想亲手给你做一顿丰盛的晚餐",             status: "pending" },
-  { id: 3, title: "养一只小狗",      category: "娱乐", description: "一起照顾一个小生命，给它取名叫布丁",      status: "pending" },
-  { id: 4, title: "拍一套情侣写真",  category: "娱乐", description: "记录我们最美好的样子",                   status: "completed" },
-  { id: 5, title: "去日本赏樱花",    category: "旅行", description: "三月的京都，和你一起漫步在樱花树下",      status: "pending" },
-  { id: 6, title: "一起学烘焙",      category: "美食", description: "亲手做蛋糕庆祝我们的纪念日",             status: "completed" },
-];
-
-const INIT_TAGS = ["旅行", "美食", "娱乐"];
-
-type ViewMode = "board" | "list";
-type FilterTab = "all" | "pending" | "completed";
-
-const FILTER_TABS: { key: FilterTab; label: string }[] = [
-  { key: "all",       label: "全部"   },
-  { key: "pending",   label: "待实现" },
-  { key: "completed", label: "已实现" },
-];
-
 export default function Wishes() {
-  const [wishes,      setWishes]      = useState<WishItem[]>(INIT);
-  const [tags,        setTags]        = useState<string[]>(INIT_TAGS);
-  const [viewMode,    setViewMode]    = useState<ViewMode>("board");
-  const [filterTab,   setFilterTab]   = useState<FilterTab>("all");
-  const [filterTag,   setFilterTag]   = useState<string>(""); // "" = 全部标签
-  const [showModal,   setShowModal]   = useState(false);
-  const [editItem,    setEditItem]    = useState<WishItem | undefined>();
-  const [deleteId,    setDeleteId]    = useState<number | null>(null);
+  const [wishes, setWishes] = useState<WishItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [tags, setTags] = useState<string[]>(["旅行", "美食", "娱乐"]);
+  const [viewMode, setViewMode] = useState<ViewMode>("board");
+  const [filterTab, setFilterTab] = useState<FilterTab>("all");
+  const [filterTag, setFilterTag] = useState<string>("");
+  const [showModal, setShowModal] = useState(false);
+  const [editItem, setEditItem] = useState<WishItem | undefined>();
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  const openAdd  = () => { setEditItem(undefined); setShowModal(true); };
+  // 从 Supabase 加载心愿清单
+  useEffect(() => {
+    async function loadWishes() {
+      try {
+        const data = await wishesService.getAll();
+        if (data.length > 0) {
+          const mappedWishes = data.map(w => ({
+            id: parseInt(w.id.slice(0, 8), 16),
+            title: w.title,
+            category: "娱乐",
+            description: w.description || "",
+            status: w.status,
+            completedDate: w.completed_at ? new Date(w.completed_at).toLocaleDateString('zh-CN') : undefined,
+          }));
+          setWishes(mappedWishes);
+          
+          // 从心愿清单中提取标签
+          const uniqueTags = [...new Set(data.map(w => "娱乐"))];
+          setTags(uniqueTags.length > 0 ? uniqueTags : ["旅行", "美食", "娱乐"]);
+        }
+      } catch (error) {
+        console.error('Failed to load wishes:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadWishes();
+  }, []);
+
+  const openAdd = () => { setEditItem(undefined); setShowModal(true); };
   const openEdit = (w: WishItem) => { setEditItem(w); setShowModal(true); };
 
-  const handleSave = (fields: { title: string; category: string; description: string }) => {
-    if (editItem) {
-      setWishes((prev) => prev.map((w) => w.id === editItem.id ? { ...w, ...fields } : w));
-    } else {
-      setWishes((prev) => [...prev, { id: Date.now(), ...fields, status: "pending" }]);
+  const handleSave = async (fields: { title: string; category: string; description: string }) => {
+    try {
+      if (editItem) {
+        await wishesService.toggleComplete(editItem.id.toString(), editItem.status === "completed");
+        setWishes((prev) => prev.map((w) => w.id === editItem.id ? { ...w, ...fields } : w));
+      } else {
+        const created = await wishesService.create({
+          title: fields.title,
+          description: fields.description,
+          status: "pending",
+        });
+        setWishes((prev) => [{ id: Date.now(), ...fields, status: "pending" }, ...prev]);
+      }
+    } catch (error) {
+      console.error('Failed to save wish:', error);
     }
   };
 
-  const handleToggle = (id: number) => {
-    setWishes((prev) => prev.map((w) => {
-      if (w.id !== id) return w;
-      return w.status === "pending"
-        ? { ...w, status: "completed", completedDate: "2026年3月11日" }
-        : { ...w, status: "pending",   completedDate: undefined };
-    }));
+  const handleToggle = async (id: number) => {
+    const wish = wishes.find(w => w.id === id);
+    if (!wish) return;
+    
+    try {
+      const newStatus = wish.status === "pending";
+      await wishesService.toggleComplete(id.toString(), newStatus);
+      setWishes((prev) => prev.map((w) => {
+        if (w.id !== id) return w;
+        return w.status === "pending"
+          ? { ...w, status: "completed", completedDate: new Date().toLocaleDateString('zh-CN') }
+          : { ...w, status: "pending", completedDate: undefined };
+      }));
+    } catch (error) {
+      console.error('Failed to toggle wish:', error);
+    }
   };
 
-  const confirmDelete = () => {
-    if (deleteId !== null) { setWishes((prev) => prev.filter((w) => w.id !== deleteId)); setDeleteId(null); }
+  const confirmDelete = async () => {
+    if (deleteId !== null) {
+      try {
+        await wishesService.delete(deleteId.toString());
+        setWishes((prev) => prev.filter((w) => w.id !== deleteId));
+      } catch (error) {
+        console.error('Failed to delete wish:', error);
+      }
+      setDeleteId(null);
+    }
   };
 
   const filtered = wishes.filter((w) => {

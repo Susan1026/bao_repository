@@ -15,6 +15,7 @@ import {
   Calendar,
   ChevronDown,
 } from "lucide-react";
+import { dailyRecordsService, storageService, DailyRecord as DailyRecordType } from "../../lib/services";
 // Temporarily using placeholder images instead of local assets for now to fix compile errors
 const baoDog = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=200";
 const zhangDog = "https://images.unsplash.com/photo-1517849845537-4d257902454a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=200";
@@ -524,6 +525,31 @@ function SketchSelect({
 
 export default function Daily() {
   const [userRole, setUserRole] = useState<UserRole>(getCurrentUserRole());
+  const [records, setRecords] = useState<DailyRecordType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [modalDate, setModalDate] = useState("");
+  const [editingRecord, setEditingRecord] = useState<DailyRecordType | undefined>();
+  const [deletingId, setDeletingId] = useState(0);
+  const [filterYear, setFilterYear] = useState("");
+  const [filterMonth, setFilterMonth] = useState("");
+  
+  // 从 Supabase 加载记录
+  useEffect(() => {
+    async function loadRecords() {
+      try {
+        const data = await dailyRecordsService.getAll();
+        if (data.length > 0) {
+          setRecords(data);
+        }
+      } catch (error) {
+        console.error('Failed to load records:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadRecords();
+  }, []);
   
   // 监听用户角色变化
   useEffect(() => {
@@ -535,56 +561,34 @@ export default function Daily() {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  const initialRecords: DailyRecord[] = [
-    {
-      id: 1, date: "2026-03-08", title: "春日野餐",
-      content: "今天天气超好，我们去公园野餐了。你准备了好多好吃的，还带了我最喜欢的草莓蛋糕！阳光正好，微风不燥，和你在一起的每一刻都是礼物。",
-      images: [], location: "城市公园", mood: "甜蜜", author: "Bao", likes: 0, liked: false,
-      comments: [{ id: 1, author: "Bao", text: "那天真的好开心！下次还要去～", time: "20:30", replies: [{ id: 2, author: "Zhang", text: "必须的！下次带更多草莓！🍓", time: "21:05" }] }],
-    },
-    {
-      id: 2, date: "2026-03-05", title: "一起做饭",
-      content: "第一次尝试一起做意大利面，虽然厨房弄得很乱，但最后端上桌那一刻超级有成就感！面条有点过熟，但你说很好吃，我就知道你在哄我😂",
-      images: [], location: "家里", mood: "搞笑", author: "Zhang", likes: 0, liked: false, comments: [],
-    },
-    {
-      id: 3, date: "2026-03-01", title: "看电影",
-      content: "看了一部超感人的电影，你偷偷抹眼泪的样子好可爱。以后要多一起看电影，也要多拍下你这种「假装没哭」的表情。",
-      images: [], location: "星光影城", mood: "感动", author: "Bao", likes: 0, liked: false, comments: [],
-    },
-    {
-      id: 4, date: "2026-02-14", title: "情人节快乐",
-      content: "你偷偷订好了餐厅，烛光晚餐加上一束玫瑰，我都惊喜坏了。这辈子能遇到你真的太幸运了。",
-      images: [], location: "浪漫西餐厅", mood: "甜蜜", author: "Zhang", likes: 0, liked: false, comments: [],
-    },
-    {
-      id: 5, date: "2026-01-20", title: "下雪天的漫步",
-      content: "第一次一起看雪，你踩着积雪发出咯吱咯吱的声音，忍不住一直踩。我们堆了个歪歪扭扭的雪人，给它取名叫「布丁」。",
-      images: [], location: "人民广场", mood: "愉悦", author: "Bao", likes: 0, liked: false, comments: [],
-    },
-  ];
-
-  const [records, setRecords] = useState(initialRecords);
-  const [showModal, setShowModal] = useState(false);
-  const [modalDate, setModalDate] = useState("");
-  const [editingRecord, setEditingRecord] = useState<DailyRecord | undefined>();
-  const [deletingId, setDeletingId] = useState(0);
-  const [filterYear, setFilterYear] = useState("");
-  const [filterMonth, setFilterMonth] = useState("");
-
   const openAdd = () => { setEditingRecord(undefined); setModalDate(""); setShowModal(true); };
-  const openEdit = (record: DailyRecord) => { setEditingRecord(record); setModalDate(""); setShowModal(true); };
+  const openEdit = (record: DailyRecordType) => { setEditingRecord(record); setModalDate(""); setShowModal(true); };
 
-  const handleSave = (r: Omit<DailyRecord, "id">) => {
-    if (editingRecord) {
-      setRecords((prev) => prev.map((rec) => rec.id === editingRecord.id ? { ...r, id: editingRecord.id } : rec));
-    } else {
-      setRecords((prev) => [{ ...r, id: Date.now() }, ...prev].sort((a, b) => b.date.localeCompare(a.date)));
+  const handleSave = async (r: Omit<DailyRecordType, 'id' | 'created_at'>) => {
+    try {
+      if (editingRecord) {
+        const updated = await dailyRecordsService.update(editingRecord.id, r);
+        setRecords((prev) => prev.map((rec) => rec.id === editingRecord.id ? { ...rec, ...updated } : rec));
+      } else {
+        const created = await dailyRecordsService.create(r as any);
+        setRecords((prev) => [created, ...prev].sort((a, b) => b.date.localeCompare(a.date)));
+      }
+    } catch (error) {
+      console.error('Failed to save record:', error);
     }
   };
 
-  const confirmDelete = () => { setRecords((prev) => prev.filter((r) => r.id !== deletingId)); setDeletingId(0); };
-  const updateRecord = (updated: DailyRecord) => setRecords((prev) => prev.map((r) => r.id === updated.id ? updated : r));
+  const confirmDelete = async () => { 
+    try {
+      await dailyRecordsService.delete(deletingId.toString());
+      setRecords((prev) => prev.filter((r) => r.id !== deletingId)); 
+    } catch (error) {
+      console.error('Failed to delete record:', error);
+    }
+    setDeletingId(0); 
+  };
+  
+  const updateRecord = (updated: DailyRecordType) => setRecords((prev) => prev.map((r) => r.id === updated.id ? updated : r));
 
   const thisMonth = "2026-03";
   const monthCount = records.filter((r) => r.date.startsWith(thisMonth)).length;

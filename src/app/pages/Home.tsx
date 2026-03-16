@@ -1,6 +1,7 @@
 import { Camera, Gift, Heart, Calendar, Star, Clock, Edit2, X, Check, Sparkles } from "lucide-react";
 import { Link } from "react-router";
 import { useState, useEffect, useRef } from "react";
+import { supabase } from "../../lib/supabase";
 import dogHeart from "../../assets/23f7802cc558024af925d42d5d80ec5a5970de84.png";
 import dogPicnic from "../../assets/c656db48b318fa361eda00dcadf756021e89f2b9.png";
 import dogPhoto from "../../assets/ba1c71918f036c1de2c94bcc180ec878a5eeb252.png";
@@ -39,8 +40,27 @@ export default function Home() {
   const [dogHover, setDogHover] = useState(false);
   const [heartBeat, setHeartBeat] = useState(false);
   const [showSparkle, setShowSparkle] = useState(false);
+  const [settingsId, setSettingsId] = useState<string | null>(null);
   const targetDays = calcDays(new Date(startDateStr), today);
   const animRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 从 Supabase 加载恋爱日期
+  useEffect(() => {
+    async function loadSettings() {
+      const { data, error } = await supabase
+        .from('couple_settings')
+        .select('*')
+        .limit(1)
+        .single();
+      
+      if (data && !error) {
+        setStartDateStr(data.start_date);
+        setTempDate(data.start_date);
+        setSettingsId(data.id);
+      }
+    }
+    loadSettings();
+  }, []);
 
   // 数字滚动动画
   useEffect(() => {
@@ -70,7 +90,22 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleSaveDate = () => {
+  const handleSaveDate = async () => {
+    if (settingsId) {
+      // 更新已有记录
+      await supabase
+        .from('couple_settings')
+        .update({ start_date: tempDate, updated_at: new Date().toISOString() })
+        .eq('id', settingsId);
+    } else {
+      // 创建新记录
+      const { data } = await supabase
+        .from('couple_settings')
+        .insert({ start_date: tempDate })
+        .select()
+        .single();
+      if (data) setSettingsId(data.id);
+    }
     setStartDateStr(tempDate);
     setEditingDate(false);
     setShowSparkle(true);

@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Calendar, Plus, Gift, Heart, Cake, Clock, ChevronRight,
   X, RefreshCw, Star, Coffee, Music, Camera, Smile, Sun,
   Edit2, Trash2, AlertTriangle, Check,
 } from "lucide-react";
+import { anniversariesService, Anniversary as AnniversaryType } from "../../lib/services";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -389,33 +390,75 @@ function AnniversaryModal({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function Anniversary() {
-  const INITIAL: AnniversaryItem[] = [
-    buildItem({ title: "一周年纪念日", rawDate: "2025-03-24", iconKey: "heart",    color: "#FF8A5B", description: "我们在一起整整一年了！", repeat: "yearly"  }, 1),
-    buildItem({ title: "Bao 的生日",   rawDate: "2025-05-15", iconKey: "cake",     color: "#FFB6C1", description: "要准备一个特别的惊喜",   repeat: "yearly"  }, 2),
-    buildItem({ title: "Zhang 的生日", rawDate: "2025-08-20", iconKey: "cake",     color: "#A8D8EA", description: "希望你每一天都开心",     repeat: "yearly"  }, 3),
-    buildItem({ title: "第一次约会",   rawDate: "2026-02-14", iconKey: "calendar", color: "#F4C2C2", description: "永远记得那个浪漫的情人节", repeat: false    }, 4),
-    buildItem({ title: "初次相识",     rawDate: "2025-06-03", iconKey: "star",     color: "#A5D6A7", description: "命运让我们相遇的那一天",  repeat: false    }, 5),
-  ];
+  const [items, setItems] = useState<AnniversaryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("all");
+  const [showModal, setShowModal] = useState(false);
+  const [editItem, setEditItem] = useState<AnniversaryItem | undefined>();
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  const [items,      setItems]      = useState<AnniversaryItem[]>(INITIAL);
-  const [activeTab,  setActiveTab]  = useState("all");
-  const [showModal,  setShowModal]  = useState(false);
-  const [editItem,   setEditItem]   = useState<AnniversaryItem | undefined>();
-  const [deleteId,   setDeleteId]   = useState<number | null>(null);
+  // 从 Supabase 加载纪念日
+  useEffect(() => {
+    async function loadAnniversaries() {
+      try {
+        const data = await anniversariesService.getAll();
+        if (data.length > 0) {
+          const builtItems = data.map((item, idx) => buildItem({
+            title: item.title,
+            rawDate: item.date,
+            iconKey: "heart",
+            color: "#FF8A5B",
+            description: item.description || "",
+            repeat: item.is_annual ? "yearly" : false,
+          }, idx + 1));
+          setItems(builtItems);
+        }
+      } catch (error) {
+        console.error('Failed to load anniversaries:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadAnniversaries();
+  }, []);
 
-  const openAdd  = () => { setEditItem(undefined); setShowModal(true); };
+  const openAdd = () => { setEditItem(undefined); setShowModal(true); };
   const openEdit = (item: AnniversaryItem) => { setEditItem(item); setShowModal(true); };
 
-  const handleSave = (fields: Parameters<typeof buildItem>[0]) => {
-    if (editItem) {
-      setItems((prev) => prev.map((it) => it.id === editItem.id ? buildItem(fields, it.id) : it));
-    } else {
-      setItems((prev) => [...prev, buildItem(fields, Date.now())]);
+  const handleSave = async (fields: Parameters<typeof buildItem>[0]) => {
+    try {
+      if (editItem) {
+        await anniversariesService.update(editItem.id.toString(), {
+          title: fields.title,
+          date: fields.rawDate,
+          description: fields.description,
+          is_annual: fields.repeat === "yearly",
+        });
+        setItems((prev) => prev.map((it) => it.id === editItem.id ? buildItem(fields, it.id) : it));
+      } else {
+        const created = await anniversariesService.create({
+          title: fields.title,
+          date: fields.rawDate,
+          description: fields.description,
+          is_annual: fields.repeat === "yearly",
+        });
+        setItems((prev) => [...prev, buildItem(fields, Date.now())]);
+      }
+    } catch (error) {
+      console.error('Failed to save anniversary:', error);
     }
   };
 
-  const confirmDelete = () => {
-    if (deleteId !== null) { setItems((prev) => prev.filter((it) => it.id !== deleteId)); setDeleteId(null); }
+  const confirmDelete = async () => {
+    if (deleteId !== null) {
+      try {
+        await anniversariesService.delete(deleteId.toString());
+        setItems((prev) => prev.filter((it) => it.id !== deleteId));
+      } catch (error) {
+        console.error('Failed to delete anniversary:', error);
+      }
+      setDeleteId(null);
+    }
   };
 
   const sorted = [...items].sort((a, b) => {
