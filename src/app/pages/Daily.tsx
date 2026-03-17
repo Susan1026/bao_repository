@@ -45,7 +45,7 @@ interface DailyComment {
 }
 
 interface DailyRecord {
-  id: number;
+  id: number | string;
   date: string;
   title: string;
   content: string;
@@ -530,7 +530,7 @@ export default function Daily() {
   const [showModal, setShowModal] = useState(false);
   const [modalDate, setModalDate] = useState("");
   const [editingRecord, setEditingRecord] = useState<DailyRecordType | undefined>();
-  const [deletingId, setDeletingId] = useState(0);
+  const [deletingId, setDeletingId] = useState<number | string>(0);
   const [filterYear, setFilterYear] = useState("");
   const [filterMonth, setFilterMonth] = useState("");
   
@@ -540,10 +540,9 @@ export default function Daily() {
       try {
         const data = await dailyRecordsService.getAll();
         if (data.length > 0) {
-          // 转换 id 为 number 格式
+          // 不转换 id，保持字符串格式，添加空 comments
           const mappedData = data.map((r: any) => ({
             ...r,
-            id: parseInt(r.id.slice(0, 8), 16),
             comments: []
           }));
           setRecords(mappedData);
@@ -574,21 +573,15 @@ export default function Daily() {
     try {
       // 移除 comments 字段，不发送到 Supabase
       const { comments, ...recordData } = r as any;
-      console.log('Saving record:', recordData);
       
       if (editingRecord) {
-        console.log('Updating record with id:', editingRecord.id.toString());
         const updated = await dailyRecordsService.update(editingRecord.id.toString(), recordData);
-        console.log('Updated:', updated);
         setRecords((prev) => prev.map((rec) => rec.id === editingRecord.id ? { ...rec, ...updated } : rec));
       } else {
-        console.log('Creating new record');
         const created = await dailyRecordsService.create(recordData);
-        console.log('Created:', created);
-        // 转换 id 格式并添加空 comments
+        // 不转换 id，添加空 comments
         const mappedCreated = {
           ...created,
-          id: parseInt(created.id.slice(0, 8), 16),
           comments: []
         };
         setRecords((prev) => [mappedCreated, ...prev].sort((a, b) => b.date.localeCompare(a.date)));
