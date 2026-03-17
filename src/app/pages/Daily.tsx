@@ -164,10 +164,19 @@ function RecordModal({
   const [mood, setMood] = useState(editRecord?.mood || "");
   const imgRef = useRef<HTMLInputElement>(null);
 
-  const handleImg = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImg = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const urls = files.map((f) => URL.createObjectURL(f));
-    setImages((prev) => [...prev, ...urls]);
+    
+    for (const file of files) {
+      try {
+        const url = await storageService.uploadImage(file);
+        setImages((prev) => [...prev, url]);
+      } catch (error) {
+        console.error('Failed to upload image:', error);
+        alert('图片上传失败，请重试');
+      }
+    }
+    
     e.target.value = "";
   };
 
