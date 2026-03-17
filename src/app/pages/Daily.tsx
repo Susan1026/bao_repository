@@ -155,7 +155,7 @@ function RecordModal({
   onClose: () => void;
   onSave: (r: Omit<DailyRecord, "id">) => void;
 }) {
-  const todayStr = "2026-03-11";
+  const todayStr = new Date().toISOString().split('T')[0];
   const [date, setDate] = useState(editRecord?.date || initialDate || todayStr);
   const [title, setTitle] = useState(editRecord?.title || "");
   const [content, setContent] = useState(editRecord?.content || "");
