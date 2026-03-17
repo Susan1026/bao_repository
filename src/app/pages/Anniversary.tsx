@@ -12,7 +12,7 @@ type RepeatMode = false | "monthly" | "yearly";
 type IconKey = "heart" | "cake" | "gift" | "calendar" | "star" | "coffee" | "music" | "camera" | "smile" | "sun";
 
 interface AnniversaryItem {
-  id: number;
+  id: number | string;
   title: string;
   rawDate: string;       // "YYYY-MM-DD" (original date, for repeat calc)
   dateDisplay: string;   // displayed date (may be advanced if repeat)
@@ -22,6 +22,7 @@ interface AnniversaryItem {
   description: string;
   isPast: boolean;
   repeat: RepeatMode;
+  supabaseId?: string;  // 保存原始 Supabase ID
 }
 
 // ─── Icon Map ─────────────────────────────────────────────────────────────────
@@ -106,7 +107,7 @@ function buildItem(
     title: string; rawDate: string; iconKey: IconKey; color: string;
     description: string; repeat: RepeatMode;
   },
-  id: number
+  id: number | string
 ): AnniversaryItem {
   const { date, daysLeft } = resolveDate(fields.rawDate, fields.repeat);
   return {
@@ -162,7 +163,7 @@ function AnniversaryModal({
   onSave: (fields: { title: string; rawDate: string; iconKey: IconKey; color: string; description: string; repeat: RepeatMode }) => void;
 }) {
   const [title,      setTitle]      = useState(editItem?.title       ?? "");
-  const [rawDate,    setRawDate]    = useState(editItem?.rawDate      ?? "2026-03-11");
+  const [rawDate,    setRawDate]    = useState(editItem?.rawDate      ?? new Date().toISOString().split("T")[0]);
   const [iconKey,    setIconKey]    = useState<IconKey>(editItem?.iconKey ?? "heart");
   const [color,      setColor]      = useState(editItem?.color        ?? "#FF8A5B");
   const [description,setDesc]       = useState(editItem?.description  ?? "");
@@ -395,7 +396,7 @@ export default function Anniversary() {
   const [activeTab, setActiveTab] = useState("all");
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState<AnniversaryItem | undefined>();
-  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleteId, setDeleteId] = useState<number | string | null>(null);
 
   // 从 Supabase 加载纪念日
   useEffect(() => {
@@ -403,14 +404,18 @@ export default function Anniversary() {
       try {
         const data = await anniversariesService.getAll();
         if (data.length > 0) {
-          const builtItems = data.map((item, idx) => buildItem({
-            title: item.title,
-            rawDate: item.date,
-            iconKey: "heart",
-            color: "#FF8A5B",
-            description: item.description || "",
-            repeat: item.is_annual ? "yearly" : false,
-          }, idx + 1));
+          const builtItems = data.map((item) => {
+            const builtItem = buildItem({
+              title: item.title,
+              rawDate: item.date,
+              iconKey: (item.icon_key as IconKey) || "heart",
+              color: item.color || "#FF8A5B",
+              description: item.description || "",
+              repeat: item.is_annual ? "yearly" : false,
+            }, item.id);
+            // 保存原始 Supabase ID
+            return { ...builtItem, supabaseId: item.id };
+          });
           setItems(builtItems);
         }
       } catch (error) {
@@ -427,22 +432,28 @@ export default function Anniversary() {
 
   const handleSave = async (fields: Parameters<typeof buildItem>[0]) => {
     try {
-      if (editItem) {
-        await anniversariesService.update(editItem.id.toString(), {
+      if (editItem && editItem.supabaseId) {
+        await anniversariesService.update(editItem.supabaseId, {
           title: fields.title,
           date: fields.rawDate,
           description: fields.description,
           is_annual: fields.repeat === "yearly",
+          icon_key: fields.iconKey,
+          color: fields.color,
         });
-        setItems((prev) => prev.map((it) => it.id === editItem.id ? buildItem(fields, it.id) : it));
+        setItems((prev) => prev.map((it) => it.id === editItem.id ? { ...buildItem(fields, it.id), supabaseId: editItem.supabaseId } : it));
       } else {
         const created = await anniversariesService.create({
           title: fields.title,
           date: fields.rawDate,
           description: fields.description,
           is_annual: fields.repeat === "yearly",
+          icon_key: fields.iconKey,
+          color: fields.color,
         });
-        setItems((prev) => [...prev, buildItem(fields, Date.now())]);
+        if (created) {
+          setItems((prev) => [...prev, { ...buildItem(fields, created.id), supabaseId: created.id }]);
+        }
       }
     } catch (error) {
       console.error('Failed to save anniversary:', error);
@@ -452,7 +463,10 @@ export default function Anniversary() {
   const confirmDelete = async () => {
     if (deleteId !== null) {
       try {
-        await anniversariesService.delete(deleteId.toString());
+        const itemToDelete = items.find(it => it.id === deleteId);
+        if (itemToDelete?.supabaseId) {
+          await anniversariesService.delete(itemToDelete.supabaseId);
+        }
         setItems((prev) => prev.filter((it) => it.id !== deleteId));
       } catch (error) {
         console.error('Failed to delete anniversary:', error);

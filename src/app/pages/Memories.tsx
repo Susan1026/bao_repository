@@ -17,21 +17,23 @@ const dogNight     = "https://images.unsplash.com/photo-1561037404-61cd46aa615b?
 type TabKey = "album" | "activities" | "checkin";
 
 interface Photo {
-  id: number;
-  albumId: number;
+  id: number | string;
+  albumId: number | string;
   url: string;
+  supabaseId?: string;
 }
 
 interface Album {
-  id: number;
+  id: number | string;
   title: string;
   description: string;
-  coverPhotoId: number | null;
+  coverPhotoId: number | string | null;
   color: string;
+  supabaseId?: string;
 }
 
 interface Activity {
-  id: number;
+  id: number | string;
   title: string;
   date: string;
   note: string;
@@ -39,6 +41,7 @@ interface Activity {
   image?: string;
   completed?: boolean;
   tagId?: string;
+  supabaseId?: string;
 }
 
 interface CheckinTag {

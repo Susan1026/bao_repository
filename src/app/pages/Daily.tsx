@@ -365,7 +365,7 @@ function RecordCard({
             <MapPin className="w-3 h-3" />{record.location}
           </div>
         </div>
-        <p className="text-base leading-relaxed" style={{ color: "#5D4037" }}>{record.content}</p>
+        <p className="text-base leading-relaxed" style={{ color: "#5D4037", whiteSpace: "pre-wrap" }}>{record.content}</p>
         {record.images.length > 0 && <ImageGrid images={record.images} />}
 
         <div className="flex items-center gap-4 mt-3 pt-3" style={{ borderTop: "1.5px dashed #F4E0D0" }}>

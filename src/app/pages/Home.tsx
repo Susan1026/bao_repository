@@ -2,6 +2,7 @@ import { Camera, Gift, Heart, Calendar, Star, Clock, Edit2, X, Check, Sparkles }
 import { Link } from "react-router";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "../../lib/supabase";
+import { anniversariesService, Anniversary } from "../../lib/services";
 import dogHeart from "../../assets/23f7802cc558024af925d42d5d80ec5a5970de84.png";
 import dogPicnic from "../../assets/c656db48b318fa361eda00dcadf756021e89f2b9.png";
 import dogPhoto from "../../assets/ba1c71918f036c1de2c94bcc180ec878a5eeb252.png";
@@ -41,6 +42,7 @@ export default function Home() {
   const [heartBeat, setHeartBeat] = useState(false);
   const [showSparkle, setShowSparkle] = useState(false);
   const [settingsId, setSettingsId] = useState<string | null>(null);
+  const [anniversaries, setAnniversaries] = useState<Anniversary[]>([]);
   const targetDays = calcDays(new Date(startDateStr), today);
   const animRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -60,6 +62,19 @@ export default function Home() {
       }
     }
     loadSettings();
+  }, []);
+
+  // 从 Supabase 加载纪念日
+  useEffect(() => {
+    async function loadAnniversaries() {
+      try {
+        const data = await anniversariesService.getAll();
+        setAnniversaries(data);
+      } catch (error) {
+        console.error('Failed to load anniversaries:', error);
+      }
+    }
+    loadAnniversaries();
   }, []);
 
   // 数字滚动动画
@@ -117,7 +132,36 @@ export default function Home() {
     setEditingDate(false);
   };
 
-  const daysToAnniversary = calcDays(today, new Date("2026-03-24"));
+  // 计算下一个纪念日
+  const getNextAnniversary = () => {
+    if (anniversaries.length === 0) return null;
+    
+    let nextAnniv = null;
+    let minDays = Infinity;
+    
+    for (const anniv of anniversaries) {
+      const annivDate = new Date(anniv.date);
+      let targetDate = new Date(annivDate);
+      targetDate.setFullYear(today.getFullYear());
+      
+      // 如果今年的日期已经过了，就用明年的
+      if (targetDate < today && anniv.is_annual) {
+        targetDate.setFullYear(today.getFullYear() + 1);
+      }
+      
+      const days = calcDays(today, targetDate);
+      
+      // 只考虑未来或今天的纪念日
+      if (days >= 0 && days < minDays) {
+        minDays = days;
+        nextAnniv = { ...anniv, displayDate: targetDate, daysLeft: days };
+      }
+    }
+    
+    return nextAnniv;
+  };
+
+  const nextAnniversary = getNextAnniversary();
 
   return (
     <div className="space-y-12">
@@ -336,38 +380,57 @@ export default function Home() {
           <h2 className="text-2xl" style={{ color: "#5D4037", fontWeight: "600" }}>即将到来的纪念日</h2>
         </div>
 
-        <Link
-          to="/anniversary"
-          className="sketch-card p-6 flex items-center gap-6 group cursor-pointer"
-          style={{ background: "white" }}
-        >
-          <div
-            className="w-20 h-20 rounded-full flex items-center justify-center circle-icon transition-transform"
-            style={{ background: "#F4A261" }}
+        {nextAnniversary ? (
+          <Link
+            to="/anniversary"
+            className="sketch-card p-6 flex items-center gap-6 group cursor-pointer"
+            style={{ background: "white" }}
           >
-            <Gift className="w-10 h-10 text-white transition-transform group-hover:scale-110" />
-          </div>
-          <div className="flex-1">
-            <div className="text-xl sm:text-2xl mb-1" style={{ color: "#5D4037", fontWeight: "600" }}>一周年 <span className="hidden sm:inline">🎉</span></div>
-            <div className="text-base" style={{ color: "#999" }}>还有 {daysToAnniversary} 天</div>
-          </div>
-          {/* 进度条 */}
-          <div className="w-32">
-            <div className="text-xs mb-1 text-right" style={{ color: "#999" }}>倒计时进度</div>
             <div
-              className="h-3 rounded-full overflow-hidden"
-              style={{ background: "#F4C2C2", border: "2px solid #4A3728" }}
+              className="w-20 h-20 rounded-full flex items-center justify-center circle-icon transition-transform"
+              style={{ background: nextAnniversary.color || "#F4A261" }}
             >
-              <div
-                className="h-full rounded-full transition-all"
-                style={{
-                  background: "#F4A261",
-                  width: `${Math.max(5, Math.min(100, ((365 - daysToAnniversary) / 365) * 100))}%`,
-                }}
-              />
+              <Gift className="w-10 h-10 text-white transition-transform group-hover:scale-110" />
             </div>
-          </div>
-        </Link>
+            <div className="flex-1">
+              <div className="text-xl sm:text-2xl mb-1" style={{ color: "#5D4037", fontWeight: "600" }}>{nextAnniversary.title} <span className="hidden sm:inline">🎉</span></div>
+              <div className="text-base" style={{ color: "#999" }}>还有 {nextAnniversary.daysLeft} 天</div>
+            </div>
+            {/* 进度条 */}
+            <div className="w-32">
+              <div className="text-xs mb-1 text-right" style={{ color: "#999" }}>倒计时进度</div>
+              <div
+                className="h-3 rounded-full overflow-hidden"
+                style={{ background: "#F4C2C2", border: "2px solid #4A3728" }}
+              >
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{
+                    background: nextAnniversary.color || "#F4A261",
+                    width: `${Math.max(5, Math.min(100, ((365 - nextAnniversary.daysLeft) / 365) * 100))}%`,
+                  }}
+                />
+              </div>
+            </div>
+          </Link>
+        ) : (
+          <Link
+            to="/anniversary"
+            className="sketch-card p-6 flex items-center gap-6 group cursor-pointer"
+            style={{ background: "white" }}
+          >
+            <div
+              className="w-20 h-20 rounded-full flex items-center justify-center circle-icon transition-transform"
+              style={{ background: "#F4A261" }}
+            >
+              <Gift className="w-10 h-10 text-white transition-transform group-hover:scale-110" />
+            </div>
+            <div className="flex-1">
+              <div className="text-xl sm:text-2xl mb-1" style={{ color: "#5D4037", fontWeight: "600" }}>添加第一个纪念日 <span className="hidden sm:inline">🎉</span></div>
+              <div className="text-base" style={{ color: "#999" }}>点击去添加</div>
+            </div>
+          </Link>
+        )}
       </div>
 
       {/* 4. 快速入口 (Quick Access) */}

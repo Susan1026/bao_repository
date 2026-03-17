@@ -17,12 +17,13 @@ const FILTER_TABS: { key: FilterTab; label: string }[] = [
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface WishItem {
-  id: number;
+  id: number | string;
   title: string;
   category: string;
   description: string;
   status: "pending" | "completed";
   completedDate?: string;
+  supabaseId?: string;
 }
 
 // ─── Tag color palette ────────────────────────────────────────────────────────
@@ -278,15 +279,9 @@ function BoardCard({
     <div className="sketch-card p-5 flex flex-col gap-3 transition-all hover:scale-[1.02] relative"
       style={{ background: isDone ? "#FDFCFA" : "white" }}>
 
-      {/* Top: tag + edit/delete actions */}
+      {/* Top: edit/delete actions */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 flex-wrap">
-          {wish.category && (
-            <span className="px-2.5 py-0.5 rounded-full text-xs border"
-              style={{ background: tagStyle.bg, color: tagStyle.text, borderColor: tagStyle.border, fontWeight: "600" }}>
-              {wish.category}
-            </span>
-          )}
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           <button onClick={onEdit}
@@ -379,17 +374,7 @@ function ListRow({
         )}
       </div>
 
-      {/* Category */}
-      <div className="flex-shrink-0">
-        {wish.category ? (
-          <span className="px-2.5 py-1 rounded-full text-xs border"
-            style={{ background: tagStyle.bg, color: tagStyle.text, borderColor: tagStyle.border, fontWeight: "600" }}>
-            {wish.category}
-          </span>
-        ) : (
-          <span className="text-xs" style={{ color: "#D0C0B0" }}>—</span>
-        )}
-      </div>
+
 
       {/* Status badge */}
       <div className="flex-shrink-0 w-16 text-center">
@@ -506,7 +491,7 @@ export default function Wishes() {
   const [filterTag, setFilterTag] = useState<string>("");
   const [showModal, setShowModal] = useState(false);
   const [editItem, setEditItem] = useState<WishItem | undefined>();
-  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleteId, setDeleteId] = useState<number | string | null>(null);
 
   // 从 Supabase 加载心愿清单
   useEffect(() => {
@@ -515,17 +500,18 @@ export default function Wishes() {
         const data = await wishesService.getAll();
         if (data.length > 0) {
           const mappedWishes = data.map(w => ({
-            id: parseInt(w.id.slice(0, 8), 16),
+            id: w.id,
             title: w.title,
-            category: "娱乐",
+            category: w.category || "娱乐",
             description: w.description || "",
             status: w.status,
             completedDate: w.completed_at ? new Date(w.completed_at).toLocaleDateString('zh-CN') : undefined,
+            supabaseId: w.id,
           }));
           setWishes(mappedWishes);
           
           // 从心愿清单中提取标签
-          const uniqueTags = [...new Set(data.map(w => "娱乐"))];
+          const uniqueTags = [...new Set(data.map(w => w.category || "娱乐"))];
           setTags(uniqueTags.length > 0 ? uniqueTags : ["旅行", "美食", "娱乐"]);
         }
       } catch (error) {
@@ -542,29 +528,34 @@ export default function Wishes() {
 
   const handleSave = async (fields: { title: string; category: string; description: string }) => {
     try {
-      if (editItem) {
-        await wishesService.toggleComplete(editItem.id.toString(), editItem.status === "completed");
+      if (editItem && editItem.supabaseId) {
+        await wishesService.update(editItem.supabaseId, {
+          title: fields.title,
+          description: fields.description,
+          category: fields.category,
+        });
         setWishes((prev) => prev.map((w) => w.id === editItem.id ? { ...w, ...fields } : w));
       } else {
         const created = await wishesService.create({
           title: fields.title,
           description: fields.description,
+          category: fields.category,
           status: "pending",
         });
-        setWishes((prev) => [{ id: Date.now(), ...fields, status: "pending" }, ...prev]);
+        setWishes((prev) => [{ id: created.id, ...fields, status: "pending", supabaseId: created.id }, ...prev]);
       }
     } catch (error) {
       console.error('Failed to save wish:', error);
     }
   };
 
-  const handleToggle = async (id: number) => {
+  const handleToggle = async (id: number | string) => {
     const wish = wishes.find(w => w.id === id);
-    if (!wish) return;
+    if (!wish || !wish.supabaseId) return;
     
     try {
       const newStatus = wish.status === "pending";
-      await wishesService.toggleComplete(id.toString(), newStatus);
+      await wishesService.toggleComplete(wish.supabaseId, newStatus);
       setWishes((prev) => prev.map((w) => {
         if (w.id !== id) return w;
         return w.status === "pending"
@@ -579,7 +570,10 @@ export default function Wishes() {
   const confirmDelete = async () => {
     if (deleteId !== null) {
       try {
-        await wishesService.delete(deleteId.toString());
+        const itemToDelete = wishes.find(w => w.id === deleteId);
+        if (itemToDelete?.supabaseId) {
+          await wishesService.delete(itemToDelete.supabaseId);
+        }
         setWishes((prev) => prev.filter((w) => w.id !== deleteId));
       } catch (error) {
         console.error('Failed to delete wish:', error);
@@ -733,7 +727,6 @@ export default function Wishes() {
             style={{ background: "#F5EFE8", color: "#8B6F47" }}>
             <div className="w-7 flex-shrink-0" />
             <div className="flex-1">标题 / 描述</div>
-            <div className="flex-shrink-0 w-20 text-center">分类</div>
             <div className="flex-shrink-0 w-16 text-center">状态</div>
             <div className="flex-shrink-0 w-16 text-center">操作</div>
           </div>
